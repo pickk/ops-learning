@@ -1,0 +1,114 @@
+"""Read-only host checks; write a report only when requested."""
+import argparse
+import json
+import logging
+import math
+import os
+import shutil
+import sys
+import tempfile
+
+
+def read_config(path):
+    file = open(path, "r", encoding="utf-8")
+    try:
+        config = json.load(file)
+    finally:
+        file.close()
+    if not isinstance(config, dict):
+        raise ValueError("配置必须是 JSON 对象")
+    for key in config:
+        if key not in ["disk_path", "disk_warning_percent", "log_path"]:
+            raise ValueError("未知配置字段：" + key)
+    threshold = config.get("disk_warning_percent", 80)
+    if isinstance(threshold, bool) or not isinstance(threshold, (int, float)):
+        raise ValueError("磁盘阈值必须是数字")
+    if not math.isfinite(threshold) or threshold < 0 or threshold > 100:
+        raise ValueError("磁盘阈值必须在 0 到 100 之间")
+    config["disk_warning_percent"] = threshold
+    base = os.path.dirname(os.path.abspath(path))
+    for key in ["disk_path", "log_path"]:
+        value = config.get(key)
+        if not isinstance(value, str) or value.strip() == "":
+            raise ValueError(key + " 必须是非空路径")
+        config[key] = os.path.realpath(os.path.join(base, value))
+    return config
+
+
+def inspect(config):
+    usage = shutil.disk_usage(config["disk_path"])
+    percent = usage.used / usage.total * 100
+    disk_alert = percent >= config["disk_warning_percent"]
+    total_lines = 0
+    error_lines = 0
+    file = open(config["log_path"], "r", encoding="utf-8")
+    try:
+        for line in file:
+            total_lines = total_lines + 1
+            fields = line.split()
+            if len(fields) >= 2 and fields[1] == "ERROR":
+                error_lines = error_lines + 1
+    finally:
+        file.close()
+    alert = disk_alert or error_lines > 0
+    return {"alert": alert, "disk": {"used_percent": round(percent, 2),
+            "warning_percent": config["disk_warning_percent"], "alert": disk_alert},
+            "log": {"lines": total_lines, "error_lines": error_lines}}
+
+
+def write_report(path, report):
+    destination = os.path.abspath(path)
+    directory = os.path.dirname(destination)
+    temporary = tempfile.NamedTemporaryFile(mode="w", encoding="utf-8",
+                                           dir=directory, prefix=".report-", delete=False)
+    temporary_path = temporary.name
+    try:
+        try:
+            json.dump(report, temporary, ensure_ascii=False, indent=2)
+            temporary.write("\n")
+            temporary.flush()
+            os.fsync(temporary.fileno())
+        finally:
+            temporary.close()
+        os.replace(temporary_path, destination)
+    finally:
+        if os.path.exists(temporary_path):
+            os.unlink(temporary_path)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="检查磁盘与固定格式日志")
+    parser.add_argument("--config", default=os.environ.get("OPS_CONFIG", "config.json"))
+    parser.add_argument("--output")
+    parser.add_argument("--dry-run", action="store_true", help="执行读取检查，只显示报告，不写文件")
+    parser.add_argument("--verbose", action="store_true")
+    args = parser.parse_args()
+    level = logging.INFO
+    if args.verbose:
+        level = logging.DEBUG
+    logging.basicConfig(level=level, format="%(levelname)s %(message)s")
+    try:
+        config = read_config(args.config)
+        if args.output:
+            destination = os.path.realpath(args.output)
+            for source in [args.config, config["log_path"]]:
+                if destination == os.path.realpath(source):
+                    raise ValueError("报告不能覆盖配置或被检查日志")
+                if os.path.exists(destination) and os.path.samefile(source, destination):
+                    raise ValueError("报告不能指向输入文件的硬链接")
+        logging.debug("配置校验完成，开始只读检查")
+        report = inspect(config)
+        if args.output and not args.dry_run:
+            write_report(args.output, report)
+            logging.info("报告写入完成")
+        print(json.dumps(report, ensure_ascii=False))
+        if report["alert"]:
+            return 1
+        return 0
+    except (OSError, ValueError, UnicodeError) as error:
+        logging.error("巡检失败：%s", error)
+        return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

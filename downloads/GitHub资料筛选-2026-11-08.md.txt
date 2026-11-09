@@ -1,0 +1,50 @@
+# GitHub 学习资料筛选与重点提炼
+
+日期：2026-11-08
+
+## 背景
+
+用户要求从 GitHub 寻找公开学习内容，只保存重点，重心为快速上手；沿用 Python 数据结构、网络编程、前端与 Node.js 三个方向及不使用常见简写语法的要求。
+
+## 已核实的来源与选取范围
+
+以下文件已实际打开读取；只保留中文提炼、定位和必要基础示例，不下载整仓或复制整章。分支链接可能随上游更新，本记录不是固定 commit 的逐字快照。
+
+| 来源 | 只看什么 | 用到本地哪里 |
+| --- | --- | --- |
+| [python/cpython：数据结构教程，3.14 分支](https://github.com/python/cpython/blob/3.14/Doc/tutorial/datastructures.rst) | list 操作、dict、set、tuple、遍历 | 01：容器选择与基本操作 |
+| [trekhleb/learn-python：test_lists.py](https://github.com/trekhleb/learn-python/blob/master/src/data_types/test_lists.py) | 观察操作和预期结果，修改输入验证 | 01：动手学习方式；不要求安装 pytest |
+| [python/cpython：HTTP 服务源码，3.14 分支](https://github.com/python/cpython/blob/3.14/Lib/http/server.py) | handle_one_request 内 do_ 方法名拼接、getattr 调用；响应方法 | 02：解释继承、do_GET 的来源和响应顺序 |
+| [mdn/curriculum：JavaScript 基础学习目标](https://github.com/mdn/curriculum/blob/main/curriculum/3-core/6-javascript-fundamentals.md) | 事件、DOM、网络请求、JSON | 03：浏览器请求与页面更新主线 |
+| [nodejs/node：HTTP 文档，v24.x 分支](https://github.com/nodejs/node/blob/v24.x/doc/api/http.md) | http.get 的 JSON 示例、响应数据事件、错误与超时 | 03：Node 客户端的阅读顺序 |
+
+源码定位：CPython 搜索 `handle_one_request`、`mname =`；Node 文档搜索 `http.get(url` 和 `JSON fetching example`。不要求读完整文件。
+
+## 核实事实
+
+- CPython 根据请求方法构造 do_ 开头的方法名并查找、调用；do_GET 不是业务方任意起名。
+- Python 容器章节覆盖本地速记选取的容器及操作；learn-python 列表示例包含预期结果核对方式，也包含当前无需学习的内容。
+- MDN 的网络请求学习目标使用 fetch。为匹配用户当前基础语法与现有代码，笔记解释同一交互链路，本地示例继续用 XMLHttpRequest；两者 API 不相同。
+- Node 文档说明 GET 客户端、响应读取和事件；本地脚本使用普通函数回调，未照搬上游箭头函数或解构。
+
+## 编辑取舍与结论
+
+以下是针对用户的学习建议，不是来源项目的要求：
+
+- 数据结构先学列表、字典、集合与循环，暂缓算法体系。
+- 网络先跑通 HTTP GET，暂缓原始 TCP、UDP 和协议栈。
+- 前端先学 DOM、事件、回调与 JSON，暂缓框架、构建工具和异步简写。
+- 练习收敛为三个：筛选离线机器、新增健康接口、两端显示新字段。
+- 已压缩 01—04 笔记并更新 README；已有示例没有改动，无须重新安装依赖。
+
+## 来源限制与待办
+
+- 未审计仓库全部内容、维护质量或全部许可证条款；公开可读不等于任意复制。本次不保存整篇原文或第三方完整代码。
+- GitHub 部分目录和 raw 文件出现抓取失败；失败路径未作为已经阅读的具体内容依据。最终表格只列成功读取的文件。
+- 没有采用大型资源集合为主教材，避免再跳转大量链接。
+- 既有示例的验证范围见 [README](README.md)；本次为文档筛选与压缩，不声称新增浏览器联调结果。
+- 待办：完成三个最小任务；需要新增 POST 或持久化时再扩充重点。
+
+## 关联文件
+
+[入口](README.md) · [数据结构](01-Python数据结构.md) · [网络](02-Python网络编程.md) · [前端与 Node](03-前端与Node交互.md) · [练习](04-练习与验收.md)

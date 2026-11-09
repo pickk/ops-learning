@@ -1,0 +1,22 @@
+"""Composition: a runner contains checks; it is not itself a check."""
+
+
+class Runner:
+    def __init__(self, checks):
+        self.checks = list(checks)
+
+    def run_all(self):
+        results = []
+        for check in self.checks:
+            results.append(check.run())
+        return results
+
+
+def exit_code(results):
+    code = 0
+    for result in results:
+        if result["status"] == "error":
+            return 2
+        if result["status"] == "alert":
+            code = 1
+    return code

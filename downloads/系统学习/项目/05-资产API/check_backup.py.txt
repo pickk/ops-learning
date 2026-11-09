@@ -1,0 +1,110 @@
+import http.client
+import json
+import os
+from pathlib import Path
+import secrets
+import sqlite3
+import subprocess
+import sys
+import tempfile
+import threading
+from auth import Auth
+from backup import copy_database
+from jobs import JobEngine
+from secure_server import create_secure_server
+from storage import Store
+
+
+def main():
+    directory = tempfile.TemporaryDirectory()
+    root = Path(directory.name)
+    source = root / "live.sqlite3"
+    snapshot = root / "snapshot.sqlite3"
+    restored = root / "restored.sqlite3"
+    store = Store(source)
+    auth = Auth(store)
+    password = secrets.token_urlsafe(24)
+    auth.set_user("restore_admin", password, "admin")
+    old_token, unused = auth.login({"username": "restore_admin", "password": password})
+    store.write("create", value={"name": "before-backup", "host": "127.0.0.1", "port": 80, "environment": "test"}, actor="restore_admin")
+    engine = JobEngine(store, workers=0)
+    connection = store.connect()
+    try:
+        engine.submit({"task": "disk_usage", "asset_id": None}, "restore_admin")
+        engine.claim()
+        engine.submit({"task": "disk_usage", "asset_id": None}, "restore_admin")
+        connection.execute("PRAGMA journal_mode=WAL")
+        connection.execute("BEGIN IMMEDIATE")
+        connection.execute("UPDATE assets SET name='uncommitted'")
+        result = copy_database(source, snapshot)
+        assert result["assets"] == 1 and result["jobs"] == 2
+        connection.rollback()
+        assert connection.execute("SELECT COUNT(*) FROM sessions").fetchone()[0] == 1
+        store.write("update", 1, {"name": "after-backup", "host": "127.0.0.1", "port": 80, "environment": "test"})
+        copy_database(snapshot, restored, restore=True)
+        target = sqlite3.connect(restored)
+        try:
+            assert target.execute("SELECT name FROM assets").fetchone()[0] == "before-backup"
+            assert target.execute("SELECT COUNT(*) FROM sessions").fetchone()[0] == 0
+            assert target.execute("SELECT COUNT(*) FROM jobs WHERE state='failed'").fetchone()[0] == 2
+            assert target.execute("SELECT COUNT(*) FROM job_events WHERE state='failed'").fetchone()[0] == 2
+        finally:
+            target.close()
+        before = snapshot.read_bytes()
+        try:
+            copy_database(source, snapshot)
+        except FileExistsError:
+            pass
+        else:
+            raise AssertionError("不应覆盖已有备份")
+        assert snapshot.read_bytes() == before
+        for invalid in [root / "missing.sqlite3", root / "broken.sqlite3"]:
+            if invalid.name == "broken.sqlite3":
+                invalid.write_text("not a database", encoding="utf-8")
+            output = root / "invalid-output.sqlite3"
+            process = subprocess.run([sys.executable, str(Path(__file__).with_name("backup.py")), "restore", "--source", str(invalid), "--destination", str(output)], capture_output=True, timeout=10)
+            assert process.returncode == 1 and not output.exists()
+        try:
+            copy_database(source, source)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("源目标相同应拒绝")
+        if os.name != "nt":
+            assert snapshot.stat().st_mode & 0o077 == 0
+    finally:
+        connection.close()
+        engine.close()
+
+    server = create_secure_server(("127.0.0.1", 0), restored)
+    thread = threading.Thread(target=server.serve_forever)
+    thread.start()
+    def request(method, path, data=None, cookie=""):
+        headers = {"Cookie": cookie, "Origin": server.origin, "Content-Type": "application/json", "X-Requested-With": "ops-course"}
+        body = None
+        if data is not None:
+            body = json.dumps(data).encode("utf-8")
+        client = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=5)
+        try:
+            client.request(method, path, body, headers)
+            response = client.getresponse()
+            return response.status, json.loads(response.read()), response.getheader("Set-Cookie")
+        finally:
+            client.close()
+    try:
+        assert request("GET", "/api/assets", cookie="ops_session=" + old_token)[0] == 401
+        status, user, cookie = request("POST", "/api/login", {"username": "restore_admin", "password": password})
+        assert status == 200
+        status, assets, unused = request("GET", "/api/assets", cookie=cookie.split(";")[0])
+        assert status == 200 and assets["items"][0]["name"] == "before-backup"
+        assert request("GET", "/api/jobs", cookie=cookie.split(";")[0])[1]["items"][0]["state"] == "failed"
+        print("PASS: online WAL snapshot, restore login/data, session revocation, no queued replay, no overwrite, missing/corrupt source, same path, POSIX permissions")
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
+        directory.cleanup()
+
+
+if __name__ == "__main__":
+    main()

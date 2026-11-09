@@ -1,0 +1,5 @@
+{
+  "disk_path": ".",
+  "disk_warning_percent": 80,
+  "log_path": "sample.txt"
+}

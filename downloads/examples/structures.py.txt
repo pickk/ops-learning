@@ -1,0 +1,40 @@
+"""基础容器练习：python structures.py。"""
+from collections import deque
+
+
+def find_offline(servers):
+    result = []
+    for server in servers:
+        if server["online"] == False:
+            result.append(server["name"])
+    return result
+
+
+def count_events(events):
+    counts = {}
+    for name in events:
+        if name not in counts:
+            counts[name] = 0
+        counts[name] = counts[name] + 1
+    return counts
+
+
+def main():
+    servers = [
+        {"name": "web-01", "online": True},
+        {"name": "db-01", "online": False}
+    ]
+    print("Offline:", find_offline(servers))
+    print("Counts:", count_events(["web-01", "db-01", "web-01"]))
+    unique = set()
+    for server in servers:
+        unique.add(server["name"])
+    print("Unique count:", len(unique))
+    tasks = deque()
+    tasks.append("check web")
+    tasks.append("check database")
+    print("First task:", tasks.popleft())
+
+
+if __name__ == "__main__":
+    main()

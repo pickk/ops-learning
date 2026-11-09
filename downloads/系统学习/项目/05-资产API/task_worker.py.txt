@@ -1,0 +1,31 @@
+"""只执行程序内定义的只读检查；不接受命令字符串。"""
+import ipaddress
+import json
+import shutil
+import socket
+import sys
+from pathlib import Path
+
+
+def main():
+    task = sys.argv[1]
+    value = json.loads(sys.argv[2])
+    if task == "disk_usage":
+        usage = shutil.disk_usage(Path(__file__).anchor)
+        result = {"total_bytes": usage.total, "used_bytes": usage.used, "free_bytes": usage.free}
+    elif task == "tcp_connect":
+        host = str(ipaddress.IPv4Address(value["host"]))
+        connection = socket.create_connection((host, value["port"]), timeout=2)
+        connection.close()
+        result = {"host": host, "port": value["port"], "connected": True}
+    else:
+        raise ValueError("不支持的任务")
+    print(json.dumps(result, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (ValueError, OSError, KeyError) as error:
+        print(json.dumps({"error": str(error)}, ensure_ascii=False))
+        sys.exit(1)

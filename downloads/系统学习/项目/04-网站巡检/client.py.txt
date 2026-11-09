@@ -1,0 +1,47 @@
+import argparse
+import http.client
+import json
+import sys
+from checker import check_url
+
+
+def main():
+    parser = argparse.ArgumentParser(description="网站巡检与 API 客户端")
+    parser.add_argument("--url", action="append", help="直接检查，可重复指定；只检查自己有权限的目标")
+    parser.add_argument("--port", type=int, default=8094)
+    args = parser.parse_args()
+    if args.url:
+        results = []
+        code = 0
+        for url in args.url:
+            result = check_url(url)
+            results.append(result)
+            if result["status"] != "ok":
+                code = 1
+        print(json.dumps(results, ensure_ascii=False, indent=2))
+        return code
+    connection = http.client.HTTPConnection("127.0.0.1", args.port, timeout=20)
+    try:
+        body = json.dumps({"ids": ["self"]}).encode("utf-8")
+        connection.request("POST", "/api/checks", body, {"Content-Type": "application/json"})
+        response = connection.getresponse()
+        data = response.read(65537)
+        if len(data) > 65536:
+            raise ValueError("响应过大")
+        value = json.loads(data.decode("utf-8"))
+        print(json.dumps(value, ensure_ascii=False, indent=2))
+        if response.status != 200:
+            return 1
+        for result in value["results"]:
+            if result["status"] != "ok":
+                return 1
+        return 0
+    except (OSError, ValueError, http.client.HTTPException, KeyError, TypeError) as error:
+        print("调用失败：", error, file=sys.stderr)
+        return 2
+    finally:
+        connection.close()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

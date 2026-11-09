@@ -1,0 +1,151 @@
+# do_GET 到底怎么回事：从请求到响应
+
+日期：2026-11-08
+
+## 背景
+
+针对学习示例 `examples/server.py`，从 HTTP 请求、类与对象讲清 `do_GET` 的来源、调用者、路径判断及响应过程。
+
+## 已核实的事实与讲解
+
+### 1. 浏览器先发请求
+
+运行服务器后，在地址栏访问 `http://127.0.0.1:8091/api/servers`。浏览器向本机 8091 端口建立连接，发送 HTTP 请求。请求开头通常类似：
+
+```http
+GET /api/servers HTTP/1.1
+Host: 127.0.0.1:8091
+```
+
+`GET` 是请求方法，通常表达读取资源；`/api/servers` 是请求路径。两者不同：方法说明做什么，路径说明对哪个资源做。浏览器不会发送 Python 方法名 `do_GET`。
+
+### 2. 服务器负责接连接，处理器负责读请求
+
+```python
+http = ThreadingHTTPServer(("127.0.0.1", 8091), Handler)
+http.serve_forever()
+```
+
+第一行创建服务器，监听本机 8091 端口，并告诉服务器使用 `Handler` 处理连接。第二行进入持续等待和处理连接的循环。
+
+这里传入的是类 `Handler`。服务器接到连接后，内部会创建处理器对象并传入连接等信息，因此不用自己写 `Handler()`。处理器按连接创建；支持持久连接时，同一处理器可以处理该连接上的多个请求。
+
+### 3. 类、继承与 self
+
+```python
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        pass
+```
+
+`class` 定义一种对象；`Handler` 是自己起的类名；括号表示它继承 `BaseHTTPRequestHandler`。继承让处理器拥有标准库提供的请求解析、响应头发送等方法，自己再补充业务处理。
+
+`def` 定义方法。执行类定义不会立即执行 `do_GET` 的方法体；只有方法被调用时才执行。
+
+`self` 是当前处理器对象。父类方法和自己定义的方法都在同一个对象上工作。父类解析后，业务方法可以读取 `self.command`、`self.path`，也可以调用继承来的 `self.send_response()`。
+
+#### 补充：继承到底是什么
+
+继承就是定义一个新类，让它可以使用已有类的方法，并在此基础上增加或修改行为。已有类叫父类，新类叫子类。类可以先理解为创建对象的模板；对象是按模板创建出的具体实例。
+
+```python
+class Animal:
+    def eat(self):
+        print("吃东西")
+
+class Dog(Animal):
+    def bark(self):
+        print("汪汪")
+
+dog = Dog()
+dog.eat()   # 使用父类的方法，输出：吃东西
+dog.bark()  # 使用子类新增的方法，输出：汪汪
+```
+
+`Dog(Animal)` 表示 Dog 继承 Animal。Dog 中没有重新写 `eat`，但 Dog 对象仍可调用它。对这个简单例子，可以理解为：查找方法时，先看子类，子类没有就沿继承关系找父类。继承不是把父类代码手动复制一遍，也不会因为写了继承就立刻执行所有方法。
+
+如果 Dog 自己也定义 `eat`，调用 `dog.eat()` 时优先使用 Dog 的版本，这叫重写；父类原来的实现仍然存在。若需要，也可以通过 `super()` 调用父类版本，本阶段先不展开。
+
+回到 `class Handler(BaseHTTPRequestHandler)`：Handler 是子类，BaseHTTPRequestHandler 是父类。你可以调用父类已有的 `self.send_response(200)`，再自己增加 `do_GET`。这里父类本身没有实现 `do_GET`，所以是在补充方法；父类的请求处理流程会按名字找到它并调用。继承提供方法的复用和扩展，收到 GET 后自动调用则来自父类具体写好的分派逻辑。
+
+### 4. 谁调用 do_GET
+
+父类的 `handle_one_request()` 读取、解析请求，随后执行方法分派。其核心逻辑可简化为：
+
+```python
+mname = "do_" + self.command
+method = getattr(self, mname)
+method()
+```
+
+这是省略错误检查等步骤的教学简化，不是完整源码。源码会先判断有没有相应方法，没有时返回 501。
+
+若 `self.command` 是 `"GET"`，拼出的名字就是 `"do_GET"`。`getattr(self, mname)` 按名字取出当前对象上的方法；`method()` 执行它。取出的是绑定方法，Python 会自动提供 `self`，因此调用处不用再传它。
+
+`do_GET` 是标准库的命名约定，不是 Python 关键字，也不是所有 HTTP 框架都必须使用的名字。对于这里的父类，改成 `do_get` 或 `get_data` 就不会被 GET 自动选中。`BaseHTTPRequestHandler` 本身不提供业务版的 `do_GET`，这里是在子类补上父类会查找的方法。
+
+### 5. 进入方法后，才判断路径
+
+现有示例中：
+
+```python
+def do_GET(self):
+    path = urlsplit(self.path).path
+    if path == "/api/servers":
+        # 生成并发送服务器列表
+        ...
+```
+
+`self.path` 来自本次请求。如果请求目标是 `/api/servers?online=true`，它包含查询部分；`urlsplit(self.path).path` 提取 `/api/servers`。这一行没有解析 `online` 参数。
+
+访问 `/`、`/browser.js`、`/api/servers`，只要方法是 GET，都会进入同一个 `do_GET`，然后由内部条件分支决定返回什么。新增 GET 接口通常就是增加一个路径分支。
+
+### 6. 怎么把结果送回浏览器
+
+以下代码可以放在处理器方法中，文件顶部需导入 `json`：
+
+```python
+data = {"status": "ok"}
+text = json.dumps(data, ensure_ascii=False)
+body = text.encode("utf-8")
+
+self.send_response(200)
+self.send_header("Content-Type", "application/json; charset=utf-8")
+self.send_header("Content-Length", str(len(body)))
+self.end_headers()
+self.wfile.write(body)
+```
+
+数据依次从 Python 字典变成 JSON 文本、UTF-8 字节。响应依次包含状态行、响应头、分隔头与正文的空行、正文。`end_headers()` 完成响应头并写出分隔；`wfile.write()` 写正文。
+
+`Content-Length` 数的是正文的字节数，因此用 `len(body)`。在这个标准库处理器中，`return data` 不会自动发送 JSON；现有示例通过 `respond()` 封装上述发送步骤。
+
+### 7. 连起来看
+
+```text
+浏览器发送 GET /api/servers
+  → 服务器接受连接并创建 Handler 对象
+  → 继承来的处理逻辑读取和解析请求
+  → 根据 GET 找到 do_GET
+  → 调用当前对象的 do_GET()
+  → 按路径选择 /api/servers 分支
+  → respond() 发送状态、响应头和正文
+  → 浏览器接收响应
+```
+
+上述链路描述新连接上的一次请求；复用连接时不必再次创建处理器。
+
+现有示例的未知 GET 路径返回 404；未实现的请求方法（如没有定义 `do_POST` 时收到 POST）由父类默认返回 501；服务没有运行则无法建立连接，根本不会进入 `do_GET`。
+
+## 待办与未决项
+
+- 在原示例中新增 `/api/health` 分支并返回 `{"status": "ok"}`，练习路径选择和 JSON 响应。
+- 本次未修改或运行服务示例，未新增接口；示例结构已阅读，分派机制已与官方资料核对。
+
+## 来源与限制
+
+- [现有学习示例](examples/server.py)：本文路径、端口和 `respond()` 的依据。
+- [Python 网络基础笔记](02-Python网络编程.md)。
+- [Python 3.14 官方 http.server 文档](https://docs.python.org/3.14/library/http.server.html)：处理器、请求属性和方法分派说明。
+- [CPython 3.14 http/server.py](https://raw.githubusercontent.com/python/cpython/3.14/Lib/http/server.py)：`handle_one_request` 的实现。
+- 本文针对标准库 `BaseHTTPRequestHandler`；不能直接套用到其他 Web 框架。请求报文和调用链经过教学简化；未核验本机 Python 的具体版本。

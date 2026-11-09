@@ -1,0 +1,376 @@
+# 第一单元：从零写出一个 Python 程序
+
+日期：2026-11-08
+
+背景：从变量、条件、循环、函数开始，建立后续数据结构、网络和前端学习需要的基础。本文是配合本地已下载资料编写的中文教学，不是第三方教程的译文。先读本单元，再读下载的源码。
+
+目标：独立写出一个检查多台服务器磁盘使用率的程序。本单元使用模拟数字，不连接真实服务器。
+
+## 第 0 课：程序怎样运行
+
+前置知识：会新建和保存文件。
+
+Python 程序是保存在 `.py` 文件中的文本。Python 解释器读取文件并执行语句。初学时可以先按“从上往下执行”理解；后面的条件、循环和函数会改变执行路径。
+
+新建 `hello.py`，输入：
+
+```python
+print("开始学习 Python")
+print(3 + 4)
+print("程序结束")
+```
+
+在文件所在目录打开终端，执行 `python hello.py`；Linux/WSL 通常使用 `python3 hello.py`。`python --version` 用于确认解释器是否可用。如果提示找不到命令，要先配置 Python，不能把这条报错当成代码有误。
+
+输出：
+
+```text
+开始学习 Python
+7
+程序结束
+```
+
+`print` 是 Python 提供的函数，括号里是交给它的内容。引号表示文字；`3 + 4` 没有引号，因此先计算再显示。代码中的 `#` 开头部分是注释，不执行。标点使用英文半角。
+
+动手：在第二行下面增加 `print("3 + 4")`。先预测，再执行。它显示文字 `3 + 4`，不会计算。
+
+独立练习：依次输出你的称呼、`10 * 3` 的结果和“完成”。只看输出应有三行。答案见末尾。
+
+## 第 1 课：变量、类型与表达式
+
+前置知识：能运行 `.py` 文件，理解 print。
+
+### 1.1 变量保存什么
+
+```python
+server_name = "web-01"
+disk_used = 60
+print(server_name)
+print(disk_used)
+disk_used = 85
+print(disk_used)
+```
+
+执行过程：
+
+| 执行位置 | server_name | disk_used | 输出 |
+| --- | --- | --- | --- |
+| 第一行之后 | web-01 | 尚未定义 | 无 |
+| 第二行之后 | web-01 | 60 | 无 |
+| 两次 print | web-01 | 60 | web-01、60 |
+| 再次赋值之后 | web-01 | 85 | 无 |
+| 最后一行 | web-01 | 85 | 85 |
+
+`=` 的作用是把右侧计算结果赋给左侧名称。它不是数学中的“左右永远相等”。变量必须先赋值再使用。名称区分大小写，使用 `server_name` 这类描述清楚的名称。
+
+### 1.2 数据有类型
+
+| 类型 | 例子 | 用途 |
+| --- | --- | --- |
+| str 字符串 | `"web-01"` | 名称、地址、文字 |
+| int 整数 | `85` | 数量、端口、整数百分比 |
+| float 浮点数 | `0.5` | 小数，如响应时间 |
+| bool 布尔值 | `True`、`False` | 是或否 |
+| None | `None` | 表示当前没有值 |
+
+```python
+used = 60
+added = 15
+used = used + added
+print(used)
+print(type(used))
+print("60" + "15")
+print(int("60") + 15)
+```
+
+结果依次为 `75`、`<class 'int'>`、`6015`、`75`。`used = used + added` 先取原来的 60，加 15，再把 75 赋给 used。
+
+`+ - * /` 分别表示加减乘除；`/` 得到除法结果，例如 `10 / 2` 为 `5.0`。`//` 是向下取整除法，`%` 是取余。先掌握 `+ - * /`，其余遇到再练。
+
+`"60"` 是文字，`60` 是数字。`int("60")` 将符合整数格式的字符串转为整数；`int("abc")` 会报错。不要把所有输入都假定为有效数字。
+
+### 1.3 输入与输出
+
+```python
+name = input("请输入服务器名称：")
+print("你输入的是", name)
+```
+
+`input` 暂停等待输入，按回车后返回字符串。输入 `85` 得到的仍然是字符串，需要计算时再转换。这里 print 用逗号分隔参数，不需要 f-string。
+
+修改练习：把 used 改成 70、added 改成 20，预测输出。
+
+独立练习：服务器容量 total=100，已用 used=35，计算 remaining 并打印。验收：输出剩余 65；能解释三者为什么是数字。
+
+常见错误：用中文引号；拼错变量名；把字符串与数字直接相加；误以为重新赋值会自动更新此前算好的其他变量。
+
+## 第 2 课：if 决定执行哪一段
+
+前置知识：变量、整数和布尔值。
+
+### 2.1 比较产生布尔值
+
+```python
+used = 85
+print(used >= 80)
+print(used < 80)
+print(used == 80)
+```
+
+结果为 True、False、False。`==` 比较值，`!=` 表示不相等，`>`、`<`、`>=`、`<=` 比较大小。`=` 是赋值，不是比较。
+
+### 2.2 分支与缩进
+
+```python
+used = 85
+if used >= 80:
+    print("需要关注")
+else:
+    print("正常")
+print("检查结束")
+```
+
+先判断条件。成立就进入 if 下方缩进的语句，否则进入 else。最后一行不缩进，因此无论选了哪个分支都会执行。每层统一缩进四个空格，不混用 Tab。冒号不可省略。
+
+### 2.3 多种情况
+
+```python
+used = 95
+if used >= 90:
+    print("严重")
+elif used >= 80:
+    print("警告")
+else:
+    print("正常")
+```
+
+这是同一条判断链，只执行第一个满足条件的分支。95 同时大于 90 和 80，但只输出“严重”。如果先判断 `>= 80`，95 就提前进入“警告”，因此条件顺序影响结果。
+
+`and` 要求两边都成立，`or` 只需至少一边成立，`not` 取反。例：`used >= 0 and used <= 100` 用于判断百分比是否在有效范围。
+
+修改练习：分别填入 79、80、89、90，写出预期后运行。这叫检查边界。
+
+独立练习：响应耗时 seconds：大于 3 输出“超时”，大于 1 输出“较慢”，其余输出“正常”。注意等于 3 属于较慢，等于 1 属于正常。答案见末尾。
+
+验收：能解释 if/elif/else 的顺序以及最后一个分支为何不再写条件。
+
+## 第 3 课：for 和 while 重复执行
+
+前置知识：变量、条件。这里先认识列表的最小写法，完整容器操作放在第二单元。
+
+### 3.1 for 逐个处理
+
+```python
+names = ["web-01", "db-01", "cache-01"]
+for name in names:
+    print("正在检查", name)
+print("全部结束")
+```
+
+方括号中的列表有三项。每轮 for 取出一项，赋给 name，再执行缩进部分。这里重复的是同一段代码，每轮 name 的值不同。print 全部结束在循环外，只执行一次。
+
+| 轮次 | name | 输出 |
+| --- | --- | --- |
+| 1 | web-01 | 正在检查 web-01 |
+| 2 | db-01 | 正在检查 db-01 |
+| 3 | cache-01 | 正在检查 cache-01 |
+
+### 3.2 循环里累计结果
+
+```python
+usage_values = [40, 85, 95]
+warning_count = 0
+for used in usage_values:
+    if used >= 80:
+        warning_count = warning_count + 1
+print("需要关注的机器数", warning_count)
+```
+
+计数变化：0 → 遇到 40 仍为 0 → 遇到 85 变为 1 → 遇到 95 变为 2。warning_count 必须在循环前初始化；放进循环会每次清零。
+
+### 3.3 range 与 while
+
+```python
+for number in range(1, 4):
+    print(number)
+
+attempt = 1
+while attempt <= 3:
+    print("第几次检查", attempt)
+    attempt = attempt + 1
+```
+
+range 的结束值不包含在内，所以第一段输出 1、2、3。while 每轮重新检查条件；第二段在 attempt 变为 4 后停止。如果忘记更新 attempt，就会一直执行。
+
+for 适合逐项处理已有数据；while 适合条件满足时持续做事。`break` 立即结束最内层循环，`continue` 跳过本轮剩余语句，进入下一轮。先把基本循环写熟，再使用这两个控制语句。
+
+修改练习：给 usage_values 增加 80，预期计数变为 3；把列表改成空列表，预期计数为 0。
+
+独立练习：对 `[10, 20, 30]` 累加求和，不使用 sum，输出 60。再用 range 输出 1 到 5。验收：能手工写出每轮累计值。
+
+## 第 4 课：函数把一件事写成可重复调用的步骤
+
+前置知识：变量、if、for。
+
+### 4.1 定义与调用不同
+
+```python
+def show_server(name):
+    print("服务器", name)
+
+print("开始")
+show_server("web-01")
+show_server("db-01")
+```
+
+def 定义步骤时不执行函数体。运行到 `show_server("web-01")` 才进入函数。name 是形参，实际传入的字符串是实参。每次调用都有本次调用的局部变量。
+
+结果：先输出“开始”，再输出两台服务器。函数要先定义再调用；定义行末尾需要冒号。
+
+### 4.2 return 把结果交回去
+
+```python
+def remaining_space(total, used):
+    remaining = total - used
+    return remaining
+
+result = remaining_space(100, 35)
+print(result)
+```
+
+调用过程：100 交给 total，35 交给 used → 算出 65 → return 将 65 交回调用处 → result 接住 65 → print 显示它。
+
+remaining 是函数里的局部变量；不要在函数外直接读取它，而应使用返回值。执行 return 后，本次函数立即结束。
+
+```python
+def only_print(value):
+    print(value)
+
+result = only_print(7)
+print(result)
+```
+
+先输出 7，再输出 None。没有 return 的函数默认返回 None。print 是显示，return 是把数据交给调用者，两者不能替换。
+
+### 4.3 函数、条件和循环组合
+
+```python
+def get_status(used):
+    if used >= 90:
+        return "严重"
+    if used >= 80:
+        return "警告"
+    return "正常"
+
+usage_values = [40, 85, 95]
+for used in usage_values:
+    status = get_status(used)
+    print(used, status)
+```
+
+输出 `40 正常`、`85 警告`、`95 严重`。这里两个 if 没写 elif 也可以，因为第一个条件成立后 return 已结束本次调用。如果分支里只有 print，则不能直接照搬这个结构。
+
+修改练习：增加 79、80、89、90，验证分界。
+
+独立练习：写 `is_slow(seconds)`，超过 1 返回 True，否则返回 False。调用两次，一次传 0.5，一次传 2。验收：函数里没有 print，调用者能拿到返回值继续判断。
+
+## 第 5 课：独立完成一个小程序
+
+前置知识：前五课完成。先自己写，再看答案。
+
+要求：给定 `[35, 80, 96, 50]`，用函数判断使用率是否达到 80；逐项输出是否需要关注；最后输出需要关注的总数。数据仍是模拟输入，暂不涉及真实网络。
+
+通过标准：
+
+1. 35 和 50 正常，80 和 96 需要关注，总数为 2。
+2. 空列表总数为 0；`[79, 80]` 的总数为 1。
+3. 函数返回布尔值，计数在循环外初始化。
+4. 能解释每个变量、条件和函数调用，不靠复制后试错。
+
+## 练习参考答案
+
+先独立写；不一样的写法也可能正确。重点核对输入、输出和执行顺序。
+
+第 0 课：
+
+```python
+print("学习者")
+print(10 * 3)
+print("完成")
+```
+
+第 1 课：
+
+```python
+total = 100
+used = 35
+remaining = total - used
+print("剩余", remaining)
+```
+
+第 2 课：
+
+```python
+seconds = 3
+if seconds > 3:
+    print("超时")
+elif seconds > 1:
+    print("较慢")
+else:
+    print("正常")
+```
+
+第 3 课：
+
+```python
+total = 0
+for number in [10, 20, 30]:
+    total = total + number
+print(total)
+for number in range(1, 6):
+    print(number)
+```
+
+第 4 课：
+
+```python
+def is_slow(seconds):
+    if seconds > 1:
+        return True
+    return False
+
+print(is_slow(0.5))
+print(is_slow(2))
+```
+
+第 5 课：
+
+```python
+def needs_attention(used):
+    if used >= 80:
+        return True
+    return False
+
+usage_values = [35, 80, 96, 50]
+warning_count = 0
+for used in usage_values:
+    attention = needs_attention(used)
+    if attention:
+        print(used, "需要关注")
+        warning_count = warning_count + 1
+    else:
+        print(used, "正常")
+print("需要关注的总数", warning_count)
+```
+
+## 卡住时怎样找问题
+
+读报错最后一行，再根据文件名和行号定位。NameError 常见于名称未定义或拼错；TypeError 常见于类型不匹配；ValueError 常见于 int 转换失败；IndentationError 是缩进问题；SyntaxError 是语法问题。程序能运行但结果错误时，临时 print 中间变量，逐轮与手工计算对比。
+
+练习时允许犯错；每次只改一个地方，再运行观察。不要看到报错就整段重写。
+
+## 来源、事实与后续
+
+本单元解释与运维练习为本地编写。已有下载的 [Trekhleb 示例](../下载资料/01-Python/src/data_types/test_lists.py) 可在学完函数后阅读；其中 assert 表示检查表达式是否成立，不成立会报错。本单元所有示例采用普通条件、循环和函数，无装饰器、推导式、lambda、f-string。
+
+下一单元应系统学习字符串、列表、字典、集合、文件与异常，然后才学习类、self 和继承。本单元完成标准不是读完，而是独立完成第 5 课。待办：实际完成练习，记录不理解的执行步骤。

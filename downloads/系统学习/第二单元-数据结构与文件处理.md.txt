@@ -1,0 +1,209 @@
+# 第二单元：把服务器清单变成报告
+
+日期：2026-11-08
+
+## 进入本单元前
+
+你应能写函数、if 和 for，理解 return。目标是读取一份文件，检查数据，统计离线机器，把结果写入新文件。这个能力会用于服务器资产清单、配置读取和日志报告。
+
+本单元例子由本地编写，容器知识配合已下载的 Trekhleb 教材。课程使用基础语法，不用推导式或 f-string。
+
+## 第 1 课：文本处理
+
+服务器名称、IP 和日志行通常是字符串。
+
+```python
+line = "  web-01,192.0.2.10,online  "
+clean = line.strip()
+parts = clean.split(",")
+print(parts[0])
+print(parts[1])
+print(parts[2])
+```
+
+strip 去掉首尾空白，split 根据分隔符拆成列表；下标从 0 开始。原 line 不会被这两个调用原地修改，返回值需要用变量接住。示例中的地址仅为文档示例，不会连接。
+
+执行过程：带空格的文字 → 去掉两端空格 → 三段文字组成列表 → 依次读取。输出 web-01、192.0.2.10、online。
+
+`len(text)` 获取字符串字符数；`text.lower()` 返回小写形式；`"error" in text` 检查是否包含文字。字符串不可原地修改字符。
+
+练习：把输入改为 `" db-01 , offline "`，分别去掉每段首尾空格。注意仅在整行调用 strip，不能清除中间各字段两侧的空格。
+
+答案：
+
+```python
+line = " db-01 , offline "
+parts = line.split(",")
+name = parts[0].strip()
+status = parts[1].strip()
+print(name, status)
+```
+
+通过标准：知道每个函数的输入、返回值，不把字符串当作数字运算。真正的 CSV 可能包含带逗号的引号字段，届时用 csv 模块；此处 split 只处理明确简单的格式。
+
+## 第 2 课：列表保存多项数据
+
+```python
+names = ["web-01", "db-01"]
+names.append("cache-01")
+print(len(names))
+print(names[0])
+for name in names:
+    print(name)
+```
+
+append 修改原列表，返回值是 None，所以不要写 `names = names.append(...)`。最后一个有效下标是 `len(names) - 1`，空列表没有第零项。`pop()` 删除并返回末尾元素；`remove(value)` 删除第一个相同值，找不到会报错。
+
+练习：创建空列表，把原列表中以 web 开头的名称放进去。
+
+答案：
+
+```python
+names = ["web-01", "db-01", "web-02"]
+web_names = []
+for name in names:
+    if name.startswith("web"):
+        web_names.append(name)
+print(web_names)
+```
+
+预期为 `['web-01', 'web-02']`。先创建容器，再循环筛选；不要边遍历 names 边删其中的元素。
+
+## 第 3 课：字典保存一条记录
+
+```python
+server = {"name": "web-01", "ip": "192.0.2.10", "online": True}
+print(server["name"])
+server["online"] = False
+server["owner"] = "ops"
+print(server.get("port", 22))
+```
+
+字典的键是字段名，值是字段内容。`server["name"]` 读取必需字段，缺少时抛出 KeyError；`get("port", 22)` 适合允许省略的字段。读取默认值不会自动把字段添加进字典。现代 Python 字典保留插入顺序，但业务逻辑应按键取字段。
+
+列表里面放字典，表示多条记录：
+
+```python
+servers = [
+    {"name": "web-01", "online": True},
+    {"name": "db-01", "online": False}
+]
+offline = []
+for server in servers:
+    if server["online"] == False:
+        offline.append(server["name"])
+print(offline)
+```
+
+servers 是整张清单，server 是当前记录，server["name"] 是字段。遇到嵌套代码先标注这三层。
+
+练习：统计在线机器数量。答案：在循环外定义 count=0，条件改为 `server["online"] == True`，条件内执行 `count = count + 1`，最后打印 count。上述清单结果为 1。
+
+## 第 4 课：去重、固定组合和引用
+
+```python
+seen = set()
+duplicates = []
+for name in ["web-01", "db-01", "web-01"]:
+    if name in seen:
+        duplicates.append(name)
+    else:
+        seen.add(name)
+print(duplicates)
+```
+
+集合用于检查“出现过没有”，不要依赖集合的遍历顺序。这里结果是 `['web-01']`。如果出现三次，该写法会记录两次重复；要唯一重复名称，可以让 duplicates 也用集合。
+
+`address = ("127.0.0.1", 8091)` 是元组，适合位置固定的组合；不能替换元组某项。网络库会使用这种形式，现阶段能读取 `address[0]`、`address[1]` 即可。
+
+```python
+first = [{"name": "web-01"}]
+second = first
+third = first.copy()
+third[0]["name"] = "changed"
+print(first[0]["name"])
+print(second is first)
+print(third is first)
+```
+
+结果为 changed、True、False。赋值共享列表；copy 复制外层列表，但内部字典仍共享。新建结果列表并放入所需的不可变字符串，可避免许多意外修改。
+
+练习：把 `third[0]["name"] = ...` 改成 `third.append({"name": "db-01"})`，first 的长度是多少？答案：1，因为外层列表已复制。
+
+## 第 5 课：文件与 JSON
+
+文件是数据的持久存储，变量只存在于进程内存里。JSON 是一种文本格式，能表达列表、对象、数字、字符串、布尔值和 null。
+
+```python
+import json
+
+text = '[{"name": "web-01", "online": true}]'
+servers = json.loads(text)
+print(servers[0]["online"])
+result_text = json.dumps(servers, ensure_ascii=False, indent=2)
+print(result_text)
+```
+
+import 加载模块；`json.loads` 将文本解析为 Python 对象，`json.dumps` 将对象变为 JSON 文本。JSON 的 true/false/null 对应 Python 的 True/False/None。JSON 字符串和键使用双引号，不能直接保存 `str(字典)` 当作 JSON。
+
+读取文件需要关闭资源：
+
+```python
+file = open("servers.json", "r", encoding="utf-8")
+try:
+    text = file.read()
+finally:
+    file.close()
+```
+
+这段依赖 servers.json 已存在。r 表示读取，w 表示写入并覆盖旧内容，a 表示追加。选择路径和写入模式前先明确要保留什么。finally 表示无论 try 是否成功，都执行清理。
+
+相对路径相对于当前工作目录，不一定是脚本所在目录；因此配套脚本要求你明确传入输入与输出路径。下一单元再系统讲文件系统与命令行。
+
+## 第 6 课：错误不是都一样
+
+```python
+text = "abc"
+try:
+    number = int(text)
+except ValueError:
+    print("这不是有效整数")
+```
+
+try 包围可能失败的操作，except 匹配错误类型；只捕获你能处理的错误。缺少文件是 FileNotFoundError，权限或磁盘问题通常是 OSError，JSON 格式错误可以按 ValueError 处理。不要使用空的 except 把所有问题吞掉。
+
+解析成功也不代表数据有效：JSON 可能是数字 3，或者 online 是字符串 `"false"`。应先检查最外层是 list，再检查每项是 dict，再校验字段类型；布尔字段不要只用真假判断，因为非空字符串 `"false"` 在 Python 中也为真。
+
+## 第 7 课：完整项目——清单报告
+
+目录：[配套项目](项目/01-清单报告/README.md)。包含输入、完整程序、运行方法和参考输出。代码按“读取 → 解析 → 校验 → 统计 → 写出”组织，不连接真实服务器。
+
+在项目目录执行：
+
+```text
+python inventory_report.py servers.json report.json
+```
+
+`sys.argv` 是命令行参数列表，第零项是脚本路径，第一和第二项分别是输入、输出文件。`main()` 集中组织步骤；`if __name__ == "__main__"` 表示直接运行本文件时调用入口，作为模块被导入时不自动执行入口。
+
+返回码 0 表示成功，非零表示失败，供后续 Shell、定时任务和平台判断任务结果。函数负责返回结构化结果，最外层负责显示错误与设置退出码。
+
+先读 build_report：它接收服务器清单，返回报告字典。再读 main：它将文件与函数连接起来。不要尝试一次记住所有行。
+
+## 综合练习与答案
+
+练习一：新增 cache-01，设为离线。预期总数 3，在线数 1，离线数 2，离线名称包含 db-01 和 cache-01。
+
+练习二：把 online 改为字符串 `"false"`。预期拒绝处理并返回非零，不把它算作在线；修回 JSON 的 false 后成功。
+
+练习三：输入空列表。预期总数 0、在线 0、离线 0、离线名称空列表。
+
+练习四：给报告新增 online_names。参考步骤：在 build_report 中创建 online_names 空列表；在线分支 append 名称；返回字典增加 online_names 键。原始输入的值应为 `["web-01"]`。
+
+通过标准：能独立写出读取与统计，能解释类型校验顺序、finally 的用途、函数输入输出，以及重启脚本后为什么仍能读取报告。答案以预期结果和修改步骤呈现，基础完整实现已在项目目录。
+
+## 来源、验证与待办
+
+容器参考：[已下载 Trekhleb 示例](../下载资料/01-Python/src/data_types/test_dictionaries.py)；项目为本地编写，不是上游原项目。语法和 JSON 基础不依赖第三方包。JSON 读取会将整个小清单放入内存，大日志应在下一单元学习逐行处理。
+
+待办：完成综合练习，再进入 Linux、参数、日志和可复用巡检脚本。运行验证记录见项目 README，未验证内容不得视为已完成。

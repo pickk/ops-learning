@@ -1,0 +1,14 @@
+# Selected and shortened from Oleksii Trekhleb / learn-python.
+# MIT license: ../../LICENSE. Modified 2026-11-08; see download manifest.
+def test_tuples():
+    """Tuples"""
+    fruits_tuple = ("apple", "banana", "cherry")
+
+    assert isinstance(fruits_tuple, tuple)
+    assert fruits_tuple[0] == "apple"
+    assert fruits_tuple[1] == "banana"
+    assert fruits_tuple[2] == "cherry"
+
+if __name__ == "__main__":
+    test_tuples()
+    print("PASS")

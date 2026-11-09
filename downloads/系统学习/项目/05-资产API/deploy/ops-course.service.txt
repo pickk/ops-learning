@@ -1,0 +1,27 @@
+[Unit]
+Description=Ops course authenticated platform (local lab)
+After=network.target
+
+[Service]
+Type=simple
+User=opscourse
+Group=opscourse
+WorkingDirectory=/opt/ops-course/current
+EnvironmentFile=/etc/ops-course.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONUTF8=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/usr/bin/python3 /opt/ops-course/current/secure_server.py --db /var/lib/ops-course/platform.sqlite3 --port 8096 --origin ${OPS_ORIGIN}
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+KillMode=mixed
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/ops-course
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="从 Python 基础到运维平台开发：连续课程、动手练习与可下载的项目源码。"><meta name="theme-color" content="#163a35"><title>check_tls.py · 运维编程手册</title><link rel="icon" href="../../../../assets/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="../../../../assets/style.css"><link rel="stylesheet" href="../../../../assets/highlight.css"><script defer src="../../../../assets/app.js" data-root="../../../../"></script></head>
+<body><a class="skip" href="#main">跳到正文</a><aside class="sidebar" id="sidebar"><a class="brand" href="../../../../index.html"><span class="brand-icon">&gt;_</span><span>运维编程手册<small>从第一行代码开始</small></span></a><a class="sidebar-home " href="../../../../index.html">⌂ 学习首页</a><p class="nav-label">系统课程 <span>10 单元</span></p><nav aria-label="系统课程"><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%B8%80%E5%8D%95%E5%85%83-Python%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80.html" ><span>01</span>Python 编程基础</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%BA%8C%E5%8D%95%E5%85%83-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E6%96%87%E4%BB%B6%E5%A4%84%E7%90%86.html" ><span>02</span>数据结构与文件处理</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%B8%89%E5%8D%95%E5%85%83-Linux%E4%B8%8E%E8%BF%90%E7%BB%B4%E8%84%9A%E6%9C%AC%E5%B7%A5%E7%A8%8B.html" ><span>03</span>Linux 与运维脚本</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E5%9B%9B%E5%8D%95%E5%85%83-%E7%B1%BB%E7%BB%A7%E6%89%BF%E4%B8%8E%E6%A8%A1%E5%9D%97%E7%BB%84%E7%BB%87.html" ><span>04</span>类、继承与模块</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%BA%94%E5%8D%95%E5%85%83-%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E4%B8%8EHTTP%E6%8E%A5%E5%8F%A3.html" ><span>05</span>网络编程与 HTTP</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E5%85%AD%E5%8D%95%E5%85%83-%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%8E%E8%B5%84%E4%BA%A7%E7%AE%A1%E7%90%86%E5%90%8E%E7%AB%AF.html" ><span>06</span>数据库与资产 API</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%B8%83%E5%8D%95%E5%85%83-%E5%89%8D%E7%AB%AF%E4%B8%8ENode%E4%BA%A4%E4%BA%92.html" ><span>07</span>前端与 Node 交互</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E5%85%AB%E5%8D%95%E5%85%83-%E8%BF%90%E7%BB%B4%E4%BB%BB%E5%8A%A1%E9%98%9F%E5%88%97%E4%B8%8E%E6%89%A7%E8%A1%8C.html" ><span>08</span>任务队列与执行</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%B9%9D%E5%8D%95%E5%85%83-%E7%99%BB%E5%BD%95%E6%9D%83%E9%99%90%E4%B8%8E%E9%83%A8%E7%BD%B2.html" ><span>09</span>登录权限与部署</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E5%8D%81%E5%8D%95%E5%85%83-%E7%BB%BC%E5%90%88%E5%AE%9E%E6%88%98%E4%B8%8E%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91.html" ><span>10</span>综合实战与独立开发</a></nav><p class="nav-label">动手与查阅</p><nav class="extras" aria-label="参考资料"><a href="../../../../projects.html">实战项目与源码 <span>05</span></a><a href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%B9%9D%E5%8D%95%E5%85%83%E8%A1%A5%E5%85%85-%E9%83%A8%E7%BD%B2%E5%A4%87%E4%BB%BD%E4%B8%8E%E6%81%A2%E5%A4%8D.html">部署、备份与恢复</a><a href="../../../../%E4%B8%8B%E8%BD%BD%E8%B5%84%E6%96%99/index.html">作者资料与练习</a><a href="../../../../notes.html">补充笔记</a></nav><div class="sidebar-footer"><span class="status-dot"></span>循序渐进 · 动手验证</div></aside>
+<div class="page"><header class="topbar"><button class="menu-toggle" aria-label="展开目录" aria-controls="sidebar" aria-expanded="false">☰</button><div class="breadcrumb">学习手册 <span>/</span> 实战项目</div><button class="search-trigger" aria-label="搜索课程"><span>⌕</span> 搜索课程、概念或代码 <kbd>/</kbd></button></header><main id="main" class="reader"><article class="prose"><p class="eyebrow">PROJECT SOURCE</p><h1>check_tls.py</h1><p class="source-path">系统学习/项目/05-资产API/check_tls.py</p><p>配套学习源码，可下载后在本机运行。</p><p><a class="button primary" href="../../../../downloads/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E9%A1%B9%E7%9B%AE/05-%E8%B5%84%E4%BA%A7API/check_tls.py.txt" download="check_tls.py">下载原文件 ↓</a> <a class="button secondary" href="../../../../downloads/learning-code.zip">下载完整学习资料 ZIP</a></p><pre><code class="hljs language-python"><span class="hljs-string">&quot;&quot;&quot;Linux + Nginx + OpenSSL：临时 CA、临时端口、实际模板代理测试。&quot;&quot;&quot;</span>
+<span class="hljs-keyword">import</span> argparse
+<span class="hljs-keyword">import</span> http.client
+<span class="hljs-keyword">import</span> json
+<span class="hljs-keyword">from</span> pathlib <span class="hljs-keyword">import</span> Path
+<span class="hljs-keyword">import</span> secrets
+<span class="hljs-keyword">import</span> socket
+<span class="hljs-keyword">import</span> ssl
+<span class="hljs-keyword">import</span> subprocess
+<span class="hljs-keyword">import</span> tempfile
+<span class="hljs-keyword">import</span> threading
+<span class="hljs-keyword">import</span> time
+<span class="hljs-keyword">from</span> auth <span class="hljs-keyword">import</span> Auth
+<span class="hljs-keyword">from</span> secure_server <span class="hljs-keyword">import</span> create_secure_server
+<span class="hljs-keyword">from</span> storage <span class="hljs-keyword">import</span> Store
+
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">run</span>(<span class="hljs-params">command</span>):
+    result = subprocess.run(command, capture_output=<span class="hljs-literal">True</span>, text=<span class="hljs-literal">True</span>, timeout=<span class="hljs-number">15</span>)
+    <span class="hljs-keyword">if</span> result.returncode != <span class="hljs-number">0</span>:
+        <span class="hljs-keyword">raise</span> RuntimeError(result.stderr)
+
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">main</span>():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(<span class="hljs-string">&quot;--nginx&quot;</span>, default=<span class="hljs-string">&quot;nginx&quot;</span>)
+    args = parser.parse_args()
+    directory = tempfile.TemporaryDirectory(prefix=<span class="hljs-string">&quot;ops-course-tls-&quot;</span>)
+    root = Path(directory.name)
+    probe = socket.socket()
+    probe.bind((<span class="hljs-string">&quot;127.0.0.1&quot;</span>, <span class="hljs-number">0</span>))
+    port = probe.getsockname()[<span class="hljs-number">1</span>]
+    probe.close()
+    origin = <span class="hljs-string">&quot;https://localhost:&quot;</span> + <span class="hljs-built_in">str</span>(port)
+    auth = Auth(Store(root / <span class="hljs-string">&quot;platform.sqlite3&quot;</span>))
+    password = secrets.token_urlsafe(<span class="hljs-number">24</span>)
+    auth.set_user(<span class="hljs-string">&quot;tls_admin&quot;</span>, password, <span class="hljs-string">&quot;admin&quot;</span>)
+    backend = create_secure_server((<span class="hljs-string">&quot;127.0.0.1&quot;</span>, <span class="hljs-number">0</span>), root / <span class="hljs-string">&quot;platform.sqlite3&quot;</span>, origin)
+    thread = threading.Thread(target=backend.serve_forever)
+    thread.start()
+    proxy = <span class="hljs-literal">None</span>
+    <span class="hljs-keyword">try</span>:
+        run([<span class="hljs-string">&quot;openssl&quot;</span>, <span class="hljs-string">&quot;req&quot;</span>, <span class="hljs-string">&quot;-x509&quot;</span>, <span class="hljs-string">&quot;-newkey&quot;</span>, <span class="hljs-string">&quot;rsa:2048&quot;</span>, <span class="hljs-string">&quot;-nodes&quot;</span>, <span class="hljs-string">&quot;-days&quot;</span>, <span class="hljs-string">&quot;1&quot;</span>, <span class="hljs-string">&quot;-subj&quot;</span>, <span class="hljs-string">&quot;/CN=OpsCourseLabCA&quot;</span>, <span class="hljs-string">&quot;-addext&quot;</span>, <span class="hljs-string">&quot;basicConstraints=critical,CA:TRUE&quot;</span>, <span class="hljs-string">&quot;-addext&quot;</span>, <span class="hljs-string">&quot;keyUsage=critical,keyCertSign,cRLSign&quot;</span>, <span class="hljs-string">&quot;-keyout&quot;</span>, <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;ca.key&quot;</span>), <span class="hljs-string">&quot;-out&quot;</span>, <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;ca.pem&quot;</span>)])
+        run([<span class="hljs-string">&quot;openssl&quot;</span>, <span class="hljs-string">&quot;req&quot;</span>, <span class="hljs-string">&quot;-new&quot;</span>, <span class="hljs-string">&quot;-newkey&quot;</span>, <span class="hljs-string">&quot;rsa:2048&quot;</span>, <span class="hljs-string">&quot;-nodes&quot;</span>, <span class="hljs-string">&quot;-subj&quot;</span>, <span class="hljs-string">&quot;/CN=localhost&quot;</span>, <span class="hljs-string">&quot;-keyout&quot;</span>, <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;server.key&quot;</span>), <span class="hljs-string">&quot;-out&quot;</span>, <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;server.csr&quot;</span>)])
+        (root / <span class="hljs-string">&quot;leaf.ext&quot;</span>).write_text(<span class="hljs-string">&quot;basicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth\nsubjectAltName=DNS:localhost\nauthorityKeyIdentifier=keyid,issuer\n&quot;</span>, encoding=<span class="hljs-string">&quot;utf-8&quot;</span>)
+        run([<span class="hljs-string">&quot;openssl&quot;</span>, <span class="hljs-string">&quot;x509&quot;</span>, <span class="hljs-string">&quot;-req&quot;</span>, <span class="hljs-string">&quot;-in&quot;</span>, <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;server.csr&quot;</span>), <span class="hljs-string">&quot;-CA&quot;</span>, <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;ca.pem&quot;</span>), <span class="hljs-string">&quot;-CAkey&quot;</span>, <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;ca.key&quot;</span>), <span class="hljs-string">&quot;-CAcreateserial&quot;</span>, <span class="hljs-string">&quot;-days&quot;</span>, <span class="hljs-string">&quot;1&quot;</span>, <span class="hljs-string">&quot;-extfile&quot;</span>, <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;leaf.ext&quot;</span>), <span class="hljs-string">&quot;-out&quot;</span>, <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;server.pem&quot;</span>)])
+        template = (Path(__file__).parent / <span class="hljs-string">&quot;deploy&quot;</span> / <span class="hljs-string">&quot;nginx.conf.example&quot;</span>).read_text(encoding=<span class="hljs-string">&quot;utf-8&quot;</span>)
+        template = template.replace(<span class="hljs-string">&quot;listen 443 ssl;&quot;</span>, <span class="hljs-string">&quot;listen 127.0.0.1:&quot;</span> + <span class="hljs-built_in">str</span>(port) + <span class="hljs-string">&quot; ssl;&quot;</span>)
+        template = template.replace(<span class="hljs-string">&quot;ops.example.test&quot;</span>, <span class="hljs-string">&quot;localhost&quot;</span>)
+        template = template.replace(<span class="hljs-string">&quot;proxy_set_header Host localhost;&quot;</span>, <span class="hljs-string">&quot;proxy_set_header Host localhost:&quot;</span> + <span class="hljs-built_in">str</span>(port) + <span class="hljs-string">&quot;;&quot;</span>)
+        template = template.replace(<span class="hljs-string">&quot;127.0.0.1:8096&quot;</span>, <span class="hljs-string">&quot;127.0.0.1:&quot;</span> + <span class="hljs-built_in">str</span>(backend.server_port))
+        template = template.replace(<span class="hljs-string">&quot;/etc/ops-course/tls/fullchain.pem&quot;</span>, <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;server.pem&quot;</span>))
+        template = template.replace(<span class="hljs-string">&quot;/etc/ops-course/tls/privkey.pem&quot;</span>, <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;server.key&quot;</span>))
+        template = <span class="hljs-string">&quot;fastcgi_temp_path &quot;</span> + <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;fastcgi&quot;</span>) + <span class="hljs-string">&quot;;\nuwsgi_temp_path &quot;</span> + <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;uwsgi&quot;</span>) + <span class="hljs-string">&quot;;\nscgi_temp_path &quot;</span> + <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;scgi&quot;</span>) + <span class="hljs-string">&quot;;\n&quot;</span> + template
+        config = <span class="hljs-string">&quot;daemon off;\nmaster_process off;\npid &quot;</span> + <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;nginx.pid&quot;</span>) + <span class="hljs-string">&quot;;\nerror_log &quot;</span> + <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;error.log&quot;</span>) + <span class="hljs-string">&quot; notice;\nevents {}\nhttp {\naccess_log &quot;</span> + <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;access.log&quot;</span>) + <span class="hljs-string">&quot;;\nclient_body_temp_path &quot;</span> + <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;body&quot;</span>) + <span class="hljs-string">&quot;;\nproxy_temp_path &quot;</span> + <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;proxy&quot;</span>) + <span class="hljs-string">&quot;;\n&quot;</span> + template + <span class="hljs-string">&quot;\n}\n&quot;</span>
+        (root / <span class="hljs-string">&quot;nginx.conf&quot;</span>).write_text(config, encoding=<span class="hljs-string">&quot;utf-8&quot;</span>)
+        command = [args.nginx, <span class="hljs-string">&quot;-p&quot;</span>, <span class="hljs-built_in">str</span>(root) + <span class="hljs-string">&quot;/&quot;</span>, <span class="hljs-string">&quot;-c&quot;</span>, <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;nginx.conf&quot;</span>), <span class="hljs-string">&quot;-e&quot;</span>, <span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;error.log&quot;</span>)]
+        run(command + [<span class="hljs-string">&quot;-t&quot;</span>])
+        proxy = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        trusted = ssl.create_default_context(cafile=<span class="hljs-built_in">str</span>(root / <span class="hljs-string">&quot;ca.pem&quot;</span>))
+
+        <span class="hljs-keyword">def</span> <span class="hljs-title function_">request</span>(<span class="hljs-params">method, path, value=<span class="hljs-literal">None</span>, cookie=<span class="hljs-string">&quot;&quot;</span>, csrf=<span class="hljs-string">&quot;&quot;</span>, request_origin=origin, context=trusted, host=<span class="hljs-string">&quot;localhost&quot;</span></span>):
+            client = http.client.HTTPSConnection(host, port, context=context, timeout=<span class="hljs-number">4</span>)
+            headers = {<span class="hljs-string">&quot;Origin&quot;</span>: request_origin, <span class="hljs-string">&quot;Content-Type&quot;</span>: <span class="hljs-string">&quot;application/json&quot;</span>, <span class="hljs-string">&quot;X-Requested-With&quot;</span>: <span class="hljs-string">&quot;ops-course&quot;</span>, <span class="hljs-string">&quot;Cookie&quot;</span>: cookie, <span class="hljs-string">&quot;X-CSRF-Token&quot;</span>: csrf}
+            body = <span class="hljs-literal">None</span>
+            <span class="hljs-keyword">if</span> value <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:
+                body = json.dumps(value).encode(<span class="hljs-string">&quot;utf-8&quot;</span>)
+            <span class="hljs-keyword">try</span>:
+                client.request(method, path, body, headers)
+                response = client.getresponse()
+                <span class="hljs-keyword">return</span> response.status, response.read(), response.getheader(<span class="hljs-string">&quot;Set-Cookie&quot;</span>)
+            <span class="hljs-keyword">finally</span>:
+                client.close()
+
+        deadline = time.monotonic() + <span class="hljs-number">8</span>
+        <span class="hljs-keyword">while</span> <span class="hljs-literal">True</span>:
+            <span class="hljs-keyword">try</span>:
+                <span class="hljs-keyword">assert</span> request(<span class="hljs-string">&quot;GET&quot;</span>, <span class="hljs-string">&quot;/api/health&quot;</span>)[<span class="hljs-number">0</span>] == <span class="hljs-number">200</span>
+                <span class="hljs-keyword">break</span>
+            <span class="hljs-keyword">except</span> ConnectionRefusedError:
+                <span class="hljs-keyword">if</span> time.monotonic() &gt; deadline:
+                    <span class="hljs-keyword">raise</span>
+                time.sleep(<span class="hljs-number">0.1</span>)
+        <span class="hljs-keyword">for</span> context, host <span class="hljs-keyword">in</span> [(ssl.create_default_context(), <span class="hljs-string">&quot;localhost&quot;</span>), (trusted, <span class="hljs-string">&quot;127.0.0.1&quot;</span>)]:
+            <span class="hljs-keyword">try</span>:
+                request(<span class="hljs-string">&quot;GET&quot;</span>, <span class="hljs-string">&quot;/api/health&quot;</span>, context=context, host=host)
+            <span class="hljs-keyword">except</span> ssl.SSLCertVerificationError:
+                <span class="hljs-keyword">pass</span>
+            <span class="hljs-keyword">else</span>:
+                <span class="hljs-keyword">raise</span> AssertionError(<span class="hljs-string">&quot;不可信 CA 或错误主机名必须失败&quot;</span>)
+        status, body, cookie = request(<span class="hljs-string">&quot;POST&quot;</span>, <span class="hljs-string">&quot;/api/login&quot;</span>, {<span class="hljs-string">&quot;username&quot;</span>: <span class="hljs-string">&quot;tls_admin&quot;</span>, <span class="hljs-string">&quot;password&quot;</span>: password})
+        <span class="hljs-keyword">assert</span> status == <span class="hljs-number">200</span> <span class="hljs-keyword">and</span> <span class="hljs-string">&quot;Secure&quot;</span> <span class="hljs-keyword">in</span> cookie <span class="hljs-keyword">and</span> <span class="hljs-string">&quot;HttpOnly&quot;</span> <span class="hljs-keyword">in</span> cookie <span class="hljs-keyword">and</span> <span class="hljs-string">&quot;SameSite=Strict&quot;</span> <span class="hljs-keyword">in</span> cookie
+        csrf = json.loads(body)[<span class="hljs-string">&quot;csrf&quot;</span>]
+        cookie = cookie.split(<span class="hljs-string">&quot;;&quot;</span>)[<span class="hljs-number">0</span>]
+        asset = {<span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;tls-asset&quot;</span>, <span class="hljs-string">&quot;host&quot;</span>: <span class="hljs-string">&quot;127.0.0.1&quot;</span>, <span class="hljs-string">&quot;port&quot;</span>: <span class="hljs-number">80</span>, <span class="hljs-string">&quot;environment&quot;</span>: <span class="hljs-string">&quot;test&quot;</span>}
+        <span class="hljs-keyword">assert</span> request(<span class="hljs-string">&quot;POST&quot;</span>, <span class="hljs-string">&quot;/api/assets&quot;</span>, asset, cookie, csrf, <span class="hljs-string">&quot;https://wrong.invalid&quot;</span>)[<span class="hljs-number">0</span>] == <span class="hljs-number">403</span>
+        <span class="hljs-keyword">assert</span> request(<span class="hljs-string">&quot;POST&quot;</span>, <span class="hljs-string">&quot;/api/assets&quot;</span>, asset, cookie)[<span class="hljs-number">0</span>] == <span class="hljs-number">403</span>
+        <span class="hljs-keyword">assert</span> request(<span class="hljs-string">&quot;POST&quot;</span>, <span class="hljs-string">&quot;/api/assets&quot;</span>, asset, cookie, csrf)[<span class="hljs-number">0</span>] == <span class="hljs-number">201</span>
+        status, body, unused = request(<span class="hljs-string">&quot;POST&quot;</span>, <span class="hljs-string">&quot;/api/jobs&quot;</span>, {<span class="hljs-string">&quot;task&quot;</span>: <span class="hljs-string">&quot;disk_usage&quot;</span>, <span class="hljs-string">&quot;asset_id&quot;</span>: <span class="hljs-literal">None</span>}, cookie, csrf)
+        <span class="hljs-keyword">assert</span> status == <span class="hljs-number">202</span>
+        job_id = json.loads(body)[<span class="hljs-string">&quot;id&quot;</span>]
+        deadline = time.monotonic() + <span class="hljs-number">10</span>
+        <span class="hljs-keyword">while</span> <span class="hljs-literal">True</span>:
+            status, body, unused = request(<span class="hljs-string">&quot;GET&quot;</span>, <span class="hljs-string">&quot;/api/jobs/&quot;</span> + <span class="hljs-built_in">str</span>(job_id), cookie=cookie)
+            job = json.loads(body)
+            <span class="hljs-keyword">if</span> job[<span class="hljs-string">&quot;state&quot;</span>] <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> [<span class="hljs-string">&quot;queued&quot;</span>, <span class="hljs-string">&quot;running&quot;</span>]:
+                <span class="hljs-keyword">assert</span> job[<span class="hljs-string">&quot;state&quot;</span>] == <span class="hljs-string">&quot;succeeded&quot;</span>
+                <span class="hljs-keyword">break</span>
+            <span class="hljs-keyword">assert</span> time.monotonic() &lt; deadline
+            time.sleep(<span class="hljs-number">0.1</span>)
+        <span class="hljs-keyword">assert</span> request(<span class="hljs-string">&quot;POST&quot;</span>, <span class="hljs-string">&quot;/api/assets&quot;</span>, {<span class="hljs-string">&quot;data&quot;</span>: <span class="hljs-string">&quot;x&quot;</span> * <span class="hljs-number">9000</span>}, cookie, csrf)[<span class="hljs-number">0</span>] == <span class="hljs-number">413</span>
+        statuses = []
+        <span class="hljs-keyword">for</span> number <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">6</span>):
+            statuses.append(request(<span class="hljs-string">&quot;POST&quot;</span>, <span class="hljs-string">&quot;/api/login&quot;</span>, {<span class="hljs-string">&quot;username&quot;</span>: <span class="hljs-string">&quot;unknown&quot;</span>, <span class="hljs-string">&quot;password&quot;</span>: <span class="hljs-string">&quot;wrong&quot;</span>})[<span class="hljs-number">0</span>])
+        <span class="hljs-keyword">assert</span> <span class="hljs-number">429</span> <span class="hljs-keyword">in</span> statuses
+        <span class="hljs-keyword">assert</span> <span class="hljs-string">&quot;limiting requests&quot;</span> <span class="hljs-keyword">in</span> (root / <span class="hljs-string">&quot;error.log&quot;</span>).read_text(encoding=<span class="hljs-string">&quot;utf-8&quot;</span>)
+        <span class="hljs-keyword">assert</span> request(<span class="hljs-string">&quot;POST&quot;</span>, <span class="hljs-string">&quot;/api/logout&quot;</span>, {}, cookie, csrf)[<span class="hljs-number">0</span>] == <span class="hljs-number">200</span>
+        <span class="hljs-keyword">assert</span> request(<span class="hljs-string">&quot;GET&quot;</span>, <span class="hljs-string">&quot;/api/assets&quot;</span>, cookie=cookie)[<span class="hljs-number">0</span>] == <span class="hljs-number">401</span>
+        <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;PASS: real Nginx template, trusted TLS, wrong CA/hostname rejection, Secure cookie, login/assets/jobs/logout, Origin/CSRF, body limit, proxy login rate limit&quot;</span>)
+    <span class="hljs-keyword">finally</span>:
+        <span class="hljs-keyword">if</span> proxy <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:
+            proxy.terminate()
+            proxy.communicate(timeout=<span class="hljs-number">8</span>)
+        backend.shutdown()
+        backend.server_close()
+        thread.join()
+        directory.cleanup()
+
+
+<span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&quot;__main__&quot;</span>:
+    main()
+</code></pre></article><footer class="page-footer"><span>运维编程手册</span><span>读概念 → 预测输出 → 动手运行 → 独立练习</span></footer></main></div>
+<dialog class="search-dialog"><form method="dialog" class="search-head"><label class="visually-hidden" for="search-input">搜索课程</label><input id="search-input" type="search" placeholder="搜索课程、概念或代码…" autocomplete="off"><button aria-label="关闭搜索">Esc</button></form><div class="search-results" aria-live="polite"><p>输入关键词，查找课程与配套源码。</p></div></dialog></body></html>

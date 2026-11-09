@@ -1,0 +1,46 @@
+// 先运行 Python server.py，再运行 node node-client.js。
+var http = require('http');
+
+function handleResponse(response) {
+    var text = '';
+    response.setEncoding('utf8');
+
+    response.on('data', function (chunk) {
+        text = text + chunk;
+        if (text.length > 65536) {
+            response.destroy(new Error('Response too large'));
+        }
+    });
+
+    response.on('end', function () {
+        if (response.statusCode !== 200) {
+            console.error('HTTP error:', response.statusCode);
+            process.exitCode = 1;
+            return;
+        }
+        try {
+            var data = JSON.parse(text);
+            var index;
+            for (index = 0; index < data.servers.length; index = index + 1) {
+                console.log(data.servers[index].name, data.servers[index].online);
+            }
+        } catch (error) {
+            console.error('Response format error:', error.message);
+            process.exitCode = 1;
+        }
+    });
+
+    response.on('error', function (error) {
+        console.error('Response error:', error.message);
+        process.exitCode = 1;
+    });
+}
+
+var request = http.get('http://127.0.0.1:8091/api/servers', handleResponse);
+request.setTimeout(5000, function () {
+    request.destroy(new Error('Request timed out'));
+});
+request.on('error', function (error) {
+    console.error('Request error:', error.message);
+    process.exitCode = 1;
+});

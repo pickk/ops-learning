@@ -1,0 +1,82 @@
+import contextlib
+import importlib
+import io
+import pathlib
+import subprocess
+import sys
+import tempfile
+from checks import BaseCheck, DiskCheck, FileCheck
+from runner import Runner, exit_code
+
+
+class FixedCheck(BaseCheck):
+    def __init__(self, ok):
+        BaseCheck.__init__(self, "fixed")
+        self.ok = ok
+
+    def evaluate(self):
+        return {"ok": self.ok, "detail": "controlled input"}
+
+
+class FailingCheck(BaseCheck):
+    def evaluate(self):
+        raise OSError("expected failure")
+
+
+class PlainCheck:
+    def run(self):
+        return {"name": "plain", "status": "ok", "detail": "no inheritance"}
+
+
+def main():
+    first = FixedCheck(True)
+    second = FixedCheck(False)
+    assert first.run()["status"] == "ok"
+    assert second.run()["status"] == "alert"
+    assert FixedCheck("false").run()["status"] == "error"
+    checks = [first, FailingCheck("broken"), second, PlainCheck()]
+    runner = Runner(checks)
+    checks.clear()
+    results = runner.run_all()
+    assert len(results) == 4
+    assert results[1]["status"] == "error"
+    assert results[3]["status"] == "ok"
+    assert exit_code(results) == 2
+    assert exit_code([second.run()]) == 1
+    assert exit_code([first.run()]) == 0
+    assert Runner([]).run_all() == []
+    try:
+        BaseCheck("unimplemented").run()
+        raise AssertionError("Missing override must remain visible")
+    except NotImplementedError:
+        pass
+    temporary = tempfile.TemporaryDirectory()
+    try:
+        root = pathlib.Path(temporary.name)
+        existing = root / "example.txt"
+        existing.write_text("hello", encoding="utf-8")
+        assert FileCheck(str(existing)).run()["status"] == "ok"
+        assert FileCheck(str(root / "absent")).run()["status"] == "alert"
+        assert DiskCheck(str(root / "absent"), 80).run()["status"] == "error"
+        assert DiskCheck(str(root), 0).run()["status"] == "alert"
+        script = pathlib.Path(__file__).resolve().parent / "main.py"
+        result = subprocess.run([sys.executable, str(script), "--file", str(existing),
+                                 "--disk-path", str(root), "--threshold", "0"], capture_output=True, timeout=10)
+        assert result.returncode == 1
+        for value in [True, -1, 101, float("nan")]:
+            try:
+                DiskCheck(str(root), value)
+                raise AssertionError("Invalid threshold accepted")
+            except ValueError:
+                pass
+    finally:
+        temporary.cleanup()
+    output = io.StringIO()
+    with contextlib.redirect_stdout(output):
+        importlib.import_module("main")
+    assert output.getvalue() == ""
+    print("PASS: state isolation, dispatch, composition, contracts, failures, real checks, CLI, import")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,65 @@
+"""Read a server inventory and write a JSON report. Standard library only."""
+import json
+import os
+import sys
+
+
+def build_report(servers):
+    if not isinstance(servers, list):
+        raise ValueError("清单最外层必须是列表")
+    names = set()
+    offline_names = []
+    online_count = 0
+    for server in servers:
+        if not isinstance(server, dict):
+            raise ValueError("每台服务器必须是字典")
+        name = server.get("name")
+        online = server.get("online")
+        if not isinstance(name, str) or name.strip() == "":
+            raise ValueError("服务器名称必须是非空字符串")
+        if not isinstance(online, bool):
+            raise ValueError("online 必须是布尔值")
+        name = name.strip()
+        if name in names:
+            raise ValueError("服务器名称重复：" + name)
+        names.add(name)
+        if online:
+            online_count = online_count + 1
+        else:
+            offline_names.append(name)
+    return {"total": len(servers), "online": online_count,
+            "offline": len(offline_names), "offline_names": offline_names}
+
+
+def main():
+    if len(sys.argv) != 3:
+        print("用法：python inventory_report.py 输入.json 输出.json", file=sys.stderr)
+        return 2
+    input_path = os.path.realpath(sys.argv[1])
+    output_path = os.path.realpath(sys.argv[2])
+    try:
+        if input_path == output_path:
+            raise ValueError("输入和输出不能是同一文件")
+        if os.path.exists(output_path) and os.path.samefile(input_path, output_path):
+            raise ValueError("输入和输出不能指向同一文件")
+        file = open(input_path, "r", encoding="utf-8")
+        try:
+            servers = json.load(file)
+        finally:
+            file.close()
+        report = build_report(servers)
+        text = json.dumps(report, ensure_ascii=False, indent=2)
+        file = open(output_path, "w", encoding="utf-8")
+        try:
+            file.write(text + "\n")
+        finally:
+            file.close()
+    except (OSError, ValueError, UnicodeError) as error:
+        print("失败：", str(error), file=sys.stderr)
+        return 1
+    print("报告已写入：", output_path)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

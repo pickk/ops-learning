@@ -1,0 +1,88 @@
+"""备份安全入口数据库；恢复始终创建新文件，绝不覆盖现用数据库。"""
+import argparse
+import json
+import os
+from pathlib import Path
+import sqlite3
+import time
+
+
+TABLES = ["assets", "audit", "jobs", "job_events", "users", "sessions", "login_attempts", "auth_events"]
+
+
+def validate(connection):
+    if connection.execute("PRAGMA integrity_check").fetchall() != [("ok",)]:
+        raise ValueError("数据库完整性检查失败")
+    names = []
+    for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'"):
+        names.append(row[0])
+    for name in TABLES:
+        if name not in names:
+            raise ValueError("缺少安全平台数据表：" + name)
+
+
+def copy_database(source, destination, restore=False, timeout=20):
+    source = Path(source).resolve(strict=True)
+    destination = Path(destination).absolute()
+    if not source.is_file():
+        raise ValueError("源文件不是普通文件")
+    if source == destination.resolve():
+        raise ValueError("源与目标不能相同")
+    source_connection = sqlite3.connect(source.as_uri() + "?mode=ro", uri=True, timeout=2)
+    target_connection = None
+    created = False
+    finished = False
+    deadline = time.monotonic() + timeout
+
+    def progress(status, remaining, total):
+        if time.monotonic() > deadline:
+            raise TimeoutError("备份等待超过时限")
+
+    try:
+        validate(source_connection)
+        # 排他创建：即使目标是已有符号链接，也不会覆盖它。
+        descriptor = os.open(destination, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        os.close(descriptor)
+        created = True
+        target_connection = sqlite3.connect(destination)
+        source_connection.backup(target_connection, pages=64, progress=progress, sleep=0.05)
+        validate(target_connection)
+        if restore:
+            target_connection.execute("BEGIN IMMEDIATE")
+            target_connection.execute("DELETE FROM sessions")
+            target_connection.execute("DELETE FROM login_attempts")
+            target_connection.execute("INSERT INTO job_events(job_id,state) SELECT id,'failed' FROM jobs WHERE state IN ('queued','running')")
+            target_connection.execute("UPDATE jobs SET state='failed',result_json=?,finished_at=CURRENT_TIMESTAMP WHERE state IN ('queued','running')",
+                                      (json.dumps({"error": "从备份恢复：未完成任务不自动重放，请核对后重新提交"}, ensure_ascii=False),))
+            target_connection.execute("INSERT INTO auth_events(username,action) VALUES('system','restore_revoke_sessions')")
+            target_connection.commit()
+        validate(target_connection)
+        result = {"destination": str(destination), "restored": restore,
+                  "assets": target_connection.execute("SELECT COUNT(*) FROM assets").fetchone()[0],
+                  "jobs": target_connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]}
+        finished = True
+        return result
+    finally:
+        if target_connection is not None:
+            target_connection.close()
+        source_connection.close()
+        if created and not finished:
+            destination.unlink()
+
+
+def main():
+    parser = argparse.ArgumentParser(description="安全平台 SQLite 在线备份 / 恢复到新文件")
+    parser.add_argument("action", choices=["backup", "restore"])
+    parser.add_argument("--source", required=True)
+    parser.add_argument("--destination", required=True)
+    args = parser.parse_args()
+    try:
+        result = copy_database(args.source, args.destination, args.action == "restore")
+    except (OSError, sqlite3.Error, ValueError) as error:
+        print(json.dumps({"ok": False, "error": str(error)}, ensure_ascii=False))
+        raise SystemExit(1)
+    print(json.dumps({"ok": True, "result": result}, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

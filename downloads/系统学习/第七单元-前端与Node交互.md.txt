@@ -1,0 +1,258 @@
+# 第七单元：前端、Node.js 与 Python 怎样交互
+
+日期：2026-11-08
+
+## 起点与完成目标
+
+前置：第一单元的变量、循环、函数，以及第五、六单元的 HTTP、JSON、资产 API。如果还不能说明 POST 请求如何进入 do_POST，先回看接口单元。
+
+本单元把资产接口变成可以点击使用的工作台。学完应能独立写一个表单，取出输入，调用 Python 接口，再将结果显示出来。教学使用普通函数、显式循环和回调，不使用箭头函数、解构、模板字符串或 async/await。无需 React、Vue 或打包工具。
+
+按以下顺序学习，每节先预测再运行。配套项目继续使用 [05-资产API](项目/05-资产API/README.md)，保留第六单元已有的数据层。
+
+## 1. 先分清三个运行位置
+
+| 程序 | 运行位置 | 本课程职责 |
+| --- | --- | --- |
+| HTML/CSS/浏览器 JavaScript | 浏览器 | 展示、接收点击、读取输入、发 HTTP |
+| Python | 服务器进程 | 处理请求、校验、操作 SQLite |
+| Node.js | 终端启动的另一进程 | 运行 JavaScript；这里做接口客户端 |
+
+JavaScript 是语言，Node.js 是运行它的环境之一。前端 JavaScript 不需要经过 Node 才能调用 Python。本课程同时展示两条路径：浏览器 → HTTP → Python；Node → HTTP → Python。
+
+浏览器有 document 和 DOM；Node 客户端没有网页，也没有 document。Node 可以使用 node:http、文件和进程接口。不要把浏览器中的 script 标签理解成“启动一个 Node 服务”。
+
+练习：关掉 Node 客户端，页面还能新增资产吗？能。关掉 Python 服务后呢？页面可能仍显示已加载内容，但请求会失败。
+
+## 2. HTML：把内容组织成元素
+
+保存以下完整内容为 `first-page.html`，用浏览器打开。此例不请求后端，直接打开文件即可。
+
+```html
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>第一张运维页面</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 16px; }
+    label { display: block; margin-bottom: 8px; }
+    input, button { padding: 10px; }
+    #result { color: #22636a; }
+  </style>
+</head>
+<body>
+  <h1>登记主机</h1>
+  <form id="host-form">
+    <label for="host">主机名称</label>
+    <input id="host" required>
+    <button type="submit">预览</button>
+  </form>
+  <p id="result" role="status"></p>
+  <script>
+    function preview(event) {
+      event.preventDefault();
+      var host = document.getElementById("host").value;
+      document.getElementById("result").textContent = "准备登记：" + host;
+    }
+    document.getElementById("host-form").addEventListener("submit", preview);
+  </script>
+</body>
+</html>
+```
+
+浏览器按标签建立元素树。h1 是标题，form 是表单，input 是输入，button 是按钮，p 是段落。id 是页面内唯一标识；label 的 for 与 input 的 id 对应，点击标签可聚焦输入框。placeholder 只是提示，不应代替标签。
+
+script 写在元素之后，因此执行时能找到元素。正式项目把脚本放在外部 app.js，用 defer 让它在文档解析后执行。HTML 是结构，不负责连接数据库。
+
+练习：把 button 改成 type="button"，点击后为何没有预览？该类型不提交表单，而监听的是 submit。回车提交与点击提交按钮都能触发 submit。
+
+## 3. CSS：选择元素并描述样式
+
+`#result` 选择 id 为 result 的元素；`.notice` 选择带该 class 的元素；`input` 选择该标签。规则内部是“属性: 值”。margin 是外间距，padding 是内容与边框之间的内间距，border 是边框。
+
+项目 style.css 中：
+
+- `box-sizing: border-box` 让设置的宽度包含内边距与边框，便于计算布局。
+- `.layout` 用 grid 排成编辑区和列表区；`minmax(0, 1fr)` 允许列表列收缩。
+- 小屏幕媒体查询把两列改为一列。
+- table 外面的容器允许横向滚动，避免表格撑破页面。
+- focus-visible 给键盘焦点明显边框；disabled 表示操作暂不可用。
+
+练习：把第一张页面 result 的颜色改成深蓝，再给输入加边框。只改变 CSS 不应该改变请求方法或数据库内容。样式和业务行为是两个层面。
+
+## 4. JavaScript 基础：对照你已学过的 Python
+
+把下面保存为 `js-basics.cjs`，终端运行 `node js-basics.cjs`，也可逐段放入浏览器控制台。
+
+```javascript
+"use strict";
+var assets = [
+    {name: "web01", port: 80, environment: "prod"},
+    {name: "test01", port: 8080, environment: "test"}
+];
+
+function describe(asset) {
+    return asset.name + ":" + asset.port;
+}
+
+for (var i = 0; i < assets.length; i = i + 1) {
+    if (assets[i].environment === "prod") {
+        console.log(describe(assets[i]));
+    }
+}
+console.log("80" + 1);
+console.log(Number("80") + 1);
+console.log("80" === 80);
+```
+
+输出依次为 web01:80、801、81、false。数组近似 Python 列表，对象在这里用于保存键值。null 明确表示“没有当前值”；undefined 常表示属性缺失或函数没有返回值。=== 比较时不自动把字符串变成数字。
+
+输入框 `.value` 是字符串，即使 type="number"。因此项目显式 Number 转换，再用 Number.isInteger 校验。不要用 parseInt 接受带额外字符的端口，例如 parseInt("80abc") 会得到 80。
+
+var 是函数作用域，不是块作用域。项目为每个资产调用一次 makeRow(asset)，让每次调用拥有自己的 asset 参数。不要把同一个 var 循环变量直接捕获进多行按钮回调，否则点击时可能都读取循环结束后的值。
+
+练习：增加一台生产资产，预测多出的输出；再写函数 countProduction，返回生产资产数量。参考答案在单元末尾。
+
+## 5. DOM 与事件：点击后谁调用函数
+
+DOM 是浏览器提供的文档对象模型。`document.getElementById("name")` 找到元素；`.value` 读输入；`.textContent` 写纯文本；createElement 创建元素；appendChild 将元素挂到页面。
+
+`addEventListener("submit", preview)` 把函数本身交给浏览器，等事件发生再调用。这里没有括号。如果写 preview()，会立即执行函数，再把返回值交给监听器。
+
+event.preventDefault() 阻止表单默认跳转刷新；它不会阻止你的代码发送 HTTP。project 中 submit 回调先提取字段，再决定 POST 或 PUT，最后发送。
+
+项目用 textContent 展示资产名称。输入 `<img src=x onerror=alert(1)>` 应原样显示文字，不应生成图片或执行代码。不要把用户文本直接赋给 innerHTML。
+
+练习：点击编辑按钮后，数据库是否立即变化？不会。这里只把行数据填入表单，设置 editingId；点击保存之后才发 PUT。
+
+## 6. 回调与异步：结果为什么不能立即返回
+
+运行下面的独立示例，预测输出顺序：
+
+```javascript
+function finished() {
+    console.log("第二步：回调运行");
+}
+setTimeout(finished, 0);
+console.log("第一步：当前代码继续运行");
+```
+
+先输出第一步，再输出第二步。回调意味着把函数交给某个机制，在之后条件满足时调用；不等于开一个 Python 线程。浏览器等待网络时仍可处理页面事件。
+
+所以 request 不能这样设计：先发送请求，下一行就 return 一个尚未到达的数据。项目使用 `done(error, result)`：成功调用 done(null, 数据)，失败调用 done(错误文字, null)。done 是我们起的参数名，传入的函数就是实际接收结果的人。
+
+`busy` 防止连续点击产生重叠操作。请求开始禁用按钮，结束恢复。仅靠禁用按钮不能提供服务端幂等或权限保证，后续平台仍需服务端规则。
+
+练习：setTimeout 的 0 是“立刻抢在当前代码之前执行”吗？不是，仍要等当前执行结束后有机会运行。
+
+## 7. 请求与响应：沿一条保存链读代码
+
+阅读 app.js 的 request：创建 XMLHttpRequest → open 设置方法与地址 → 注册 onload/onerror/ontimeout → send。虽然名字含 XML，本项目收发的是 JSON。
+
+JSON.stringify 把对象变成文本，Python 用 json.loads 解析；Python json.dumps 输出 JSON，浏览器 JSON.parse 解析。浏览器和 Python 没有共享同一个字典对象。
+
+onload 表示收到了 HTTP 响应，不表示业务成功：409 同样会进入 onload，所以必须检查 status。onerror 处理网络失败，ontimeout 处理等待超过设定时间。
+
+完整保存顺序：
+
+1. submit 回调阻止默认跳转，从输入框读取字符串。
+2. 转换端口，做基础校验。
+3. editingId 为 null 用 POST，否则使用带编号的 PUT。
+4. request 发送 JSON，Python 校验并提交数据库事务。
+5. 回调成功后清空编辑状态，再 GET 列表。
+6. 根据返回数组创建表格行，更新提示。
+
+服务器可能已写入但响应丢失。超时不能直接解释为“没有保存”，因此页面提醒先刷新核对。没有自动重发写请求。
+
+练习：服务器返回 409 时应清空表单吗？不应该。保留输入让用户修改名称；项目已实现这一点。
+
+## 8. 同源与静态文件：为什么不能直接打开项目 HTML
+
+同源比较协议、主机、端口。http://127.0.0.1:8095 与 http://localhost:8095 的主机不同；8095 与 8097 的端口不同。浏览器的跨源读取受规则限制，Node HTTP 客户端没有同一套浏览器同源约束。
+
+本项目由同一个 Python 服务器提供页面和 /api/assets。页面使用 `/api/assets`，自然请求当前源。不要双击项目 index.html 后期待相对接口指向服务器，也不要为绕过错误随意开放所有跨源请求。
+
+server.py 的 serve_page 只允许三个固定路径：/、/app.js、/style.css。它不根据 URL 任意读取磁盘，因此请求 /storage.py 或数据库文件不会下载源码或数据。这里的 Path(__file__).parent 指源码目录；数据库相对路径仍按启动目录解析，两者不要混淆。
+
+## 9. Node 客户端：用同一种语言在终端调用接口
+
+先启动 Python，再在项目目录运行：
+
+```text
+python server.py --db assets.sqlite3 --port 8095
+```
+
+另一个终端：
+
+```text
+node node_client.cjs 8095
+```
+
+Node 客户端只查询，不修改资产。阅读顺序是 require 引入 node:http → 校验端口 → http.get → response 的 data 事件积累文本 → end 事件解析完整 JSON → 输出列表。数据可能分多块到达，不能认为第一次 data 就是完整 JSON。
+
+代码调用 setEncoding("utf8") 处理中文文本。还设置整个请求的 5 秒定时器，时间到主动 destroy；仅设置超时通知而不终止请求，并不能保证程序结束。HTTP 非 200、网络错误、解析失败设置非零退出码，便于脚本调用者判断失败。
+
+Node 也能写服务器或构建前端，但本单元无需替换 Python。`.cjs` 表示这里使用 CommonJS 模块形式，require 引入模块。项目运行不需要 npm 安装依赖；只有可选浏览器自动验证需要 Playwright。
+
+## 10. 操作练习与排错顺序
+
+在项目目录启动服务后访问 http://127.0.0.1:8095/，完成：新增 web01 → 刷新浏览器 → 编辑端口为 8080 → 创建同名资产看错误 → 取消删除 → 确认删除。再新增六台，检查每页五台及最后一页删除后退回上一页。
+
+打开浏览器开发者工具的 Network 面板，只过滤本地接口。观察方法、URL、状态码、请求内容、响应内容。Console 用于 JavaScript 错误，Python 终端用于服务是否启动；不要只看页面“没有变化”。
+
+| 现象 | 优先检查 |
+| --- | --- |
+| 页面无法打开 | Python 是否启动、端口是否一致 |
+| 页面显示但没有列表 | Network 中 GET 的状态；Console 的报错 |
+| document is not defined | 是否误在 Node 执行浏览器代码 |
+| 找元素得到 null | id 是否拼错；脚本是否早于元素解析 |
+| 400/409 | 响应 error、字段类型、重复名称 |
+| 删除后仍看见旧记录 | 是否仅点击了删除而没确认；是否刷新失败 |
+| 请求断网或超时 | 保留输入，恢复服务后先刷新核对写入状态 |
+
+练习时可停止服务再刷新列表，检查提示，重启后再次刷新。不要通过清空数据库处理网络错误。
+
+## 11. 独立练习与答案
+
+练习 A：统计数组中的生产资产数量，不使用 filter、reduce 或简写。
+
+```javascript
+function countProduction(assets) {
+    var count = 0;
+    for (var i = 0; i < assets.length; i = i + 1) {
+        if (assets[i].environment === "prod") { count = count + 1; }
+    }
+    return count;
+}
+console.log(countProduction([{environment: "prod"}, {environment: "test"}]));
+```
+
+应输出 1。空数组应输出 0。
+
+练习 B：独立做一个只读页，有“读取资产”按钮和结果段落。先不画表格。参考步骤：点击事件 → XMLHttpRequest GET /api/assets → onload 检查 200 → JSON.parse → 段落 textContent 写 total。可在现有 index.html 添加按钮，用已有 request 函数完成下面的回调，页面需要先有 id 为 read-total、total-result 的元素。
+
+```javascript
+document.getElementById("read-total").addEventListener("click", function () {
+    request("GET", "/api/assets", null, function (error, data) {
+        var output = document.getElementById("total-result");
+        if (error !== null) { output.textContent = error; return; }
+        output.textContent = "总资产数：" + data.total;
+    });
+});
+```
+
+练习 C：把每页 5 条改成 10 条，需要改哪里？app.js 的 limit；数量提示和 offset 计算已引用同一变量。应新增至少 11 条再验证第二页，而不是只看第一页没有报错。
+
+练习 D：解释 request 内部的 done 和调用处 function(error, data) 的关系。答案：后者被作为第四个参数传入，函数内部参数名叫 done；执行 done 就是在执行这个传入函数。参数名称可以不同，位置决定对应关系。
+
+通过标准：能写出 A、B，解释 C、D；能在 Network 面板找到 POST 内容及对应响应；能独立定位一个字段类型错误；能说明浏览器、Node、Python 和 SQLite 各自职责。
+
+## 验证事实与后续
+
+2026-11-08：真实 Chromium 与临时 Python/SQLite 服务完成新增、重载读取、编辑、409 保留输入、文本安全显示、取消删除、确认删除、分页和末页删除回退、离线提示与恢复、手机宽度、Node 客户端读取。浏览器无页面脚本异常。已检查桌面与手机截图。API 原有回归检查同时通过。
+
+本单元只讲资产交互。共享项目已在[第八单元](第八单元-运维任务队列与执行.md)加入白名单任务与状态查询，第九单元仍需处理身份与部署。当前验证不能证明跨浏览器兼容、真实网络断流后的写入一致性或生产容量。
+
+资料：交互接口核对 [MDN XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest_API/Using_XMLHttpRequest)，Node HTTP 核对 [Node 官方文档](https://nodejs.org/api/http.html)。作者原始资料见 [下载资料入口](../下载资料/README.md)，其中 MDN fetch 改编示例供掌握回调后对照；本章用 XMLHttpRequest 先展示清晰的事件调用链。教学代码为本地编写，不是上述网页全文摘录。

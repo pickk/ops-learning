@@ -1,0 +1,34 @@
+"""先启动 server.py，再运行本客户端。"""
+import json
+import socket
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
+
+
+def main():
+    response = None
+    try:
+        response = urlopen("http://127.0.0.1:8091/api/servers", timeout=5)
+        content = response.read(65537)
+        if len(content) > 65536:
+            raise ValueError("响应超过学习示例的大小限制")
+        data = json.loads(content.decode("utf-8"))
+        for server in data["servers"]:
+            print(server["name"], server["online"])
+    except HTTPError as error:
+        print("HTTP error:", error.code)
+        error.close()
+        raise SystemExit(1)
+    except (URLError, TimeoutError, socket.timeout, OSError) as error:
+        print("Network error:", str(error))
+        raise SystemExit(1)
+    except (ValueError, UnicodeError, KeyError, TypeError) as error:
+        print("Response format error:", str(error))
+        raise SystemExit(1)
+    finally:
+        if response is not None:
+            response.close()
+
+
+if __name__ == "__main__":
+    main()

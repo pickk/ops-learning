@@ -1,0 +1,141 @@
+# 第五单元：从网络请求到巡检 API
+
+日期：2026-11-08
+
+## 前置知识与目标
+
+先完成函数、文件、异常、类和模块。目标是能检查多个网站，并把检查逻辑变成其他程序可调用的 HTTP 接口。项目使用本机服务验证，不依赖公共网站在线状态。
+
+## 第 1 课：地址、端口和名字
+
+IP 用于寻址；端口区分一台机器上的网络服务；DNS 将名称解析成地址。`http://127.0.0.1:8094/api/health` 中，http 是协议，127.0.0.1 是主机，8094 是端口，/api/health 是路径。
+
+127.0.0.1 表示发请求这台机器自己。在你的电脑访问它不会连接另一台服务器。监听 0.0.0.0 表示接受所有 IPv4 接口上的连接，不是让用户复制这个地址访问。
+
+```python
+from urllib.parse import urlsplit
+
+address = urlsplit("http://127.0.0.1:8094/api/health?detail=true")
+print(address.scheme)
+print(address.hostname)
+print(address.port)
+print(address.path)
+print(address.query)
+```
+
+输出分别为 http、127.0.0.1、8094、/api/health、detail=true。URL 不要简单用冒号 split：协议、端口和 IPv6 地址都可能有冒号。
+
+练习：把端口改成 8095，说明哪些部分变化。答案：只有 port 变化；能解析 URL 不表示对应服务一定存在。
+
+## 第 2 课：TCP 和 Socket
+
+TCP 提供可靠有序的字节流，Socket 是程序使用网络的接口。TCP 不会告诉你一次应用消息有多少字节：一次 send 不保证对应一次 recv。
+
+运行已下载并改写的 [回声服务端](../下载资料/02-网络/python-sockets-tutorial/echo-server.py) 和 [客户端](../下载资料/02-网络/python-sockets-tutorial/echo-client.py)。先启动服务端，再运行客户端。
+
+服务端顺序：socket 创建端点 → bind 绑定地址 → listen 等待连接 → accept 得到本次连接 → recv 读取 → sendall 回传 → close。
+
+客户端顺序：socket → connect → sendall → shutdown 结束发送方向 → 循环 recv 直到对端关闭 → close。这里使用关闭发送方向作为消息结束信号；其他协议可能采用固定长度、分隔符或长度前缀。
+
+练习：解释为什么客户端循环 recv。答案：消息可能分多段到达，不能只读取一次就认定完整。练习只发送少量文本，不用它代替完整文件传输协议。
+
+## 第 3 课：HTTP 在字节流上定义格式
+
+典型请求分为请求行、头、空行、可选消息体：
+
+```http
+POST /api/checks HTTP/1.1
+Host: 127.0.0.1:8094
+Content-Type: application/json
+Content-Length: 17
+
+{"ids": ["self"]}
+```
+
+上面的 JSON 若按展示文字实际编码，其长度应由程序计算，不要手填示意值；本课程客户端交给 http.client 自动填写 Content-Length。HTTP 消息中的换行、编码和长度有严格规则，学习应用接口时使用库来处理。
+
+GET 读取信息；POST 提交处理请求。状态码表达请求处理结果：200 成功，400 参数错误，404 路径不存在，409 当前状态冲突，413 内容过大，415 内容类型不支持，500 服务端错误。
+
+接口返回 200 不代表所有受检网站都正常。接口成功返回检查结果，其中某目标可能是 alert 或 error。必须区分外层 API 状态与内层业务状态。
+
+练习：接口成功检查出一个 404 网站，外层应该是什么？本项目答案：200，内部 http_status=404、status=alert。
+
+## 第 4 课：用 Python 发出请求
+
+先启动项目 server.py，再运行：
+
+```python
+import http.client
+import json
+
+connection = http.client.HTTPConnection("127.0.0.1", 8094, timeout=3)
+try:
+    connection.request("GET", "/api/health")
+    response = connection.getresponse()
+    print(response.status)
+    body = response.read(4096)
+    data = json.loads(body.decode("utf-8"))
+    print(data["status"])
+finally:
+    connection.close()
+```
+
+先连接对象配置，再发送，接着接收响应头，最后读取消息体。read 得到 bytes，decode 得到文字，loads 得到 Python 对象。这里读取上限用于小型演示响应，遇到更大的业务消息要明确上限和截断处理。
+
+网络库返回 404 时不一定抛异常，需检查状态码；无法连接时才可能在 getresponse 之前失败。异常处理不能替代状态检查。
+
+项目 checker.py 只检查响应头是否收到、状态是否为 2xx，不读取完整正文。这样可以演示基础可用性，但不能证明页面内容正确或所有资源正常。
+
+## 第 5 课：超时、HTTPS 与重试边界
+
+timeout 限制部分阻塞网络操作，不等于整个任务的严格总时间上限；DNS 和多次读写还可能受系统行为影响。严谨的任务总时限将在任务平台单元由工作进程控制。
+
+HTTPS 使用 TLS 保护传输；本项目使用 HTTPSConnection 默认的证书与主机名校验。证书错误应作为失败排查，不通过关闭验证来让检查“变绿”。本阶段自动化验证使用本地 HTTP，尚未运行本地证书链用例。
+
+重试需要回答三件事：哪些错误值得重试、最多几次、重复执行是否安全。网络抖动可以考虑有限重试；配置格式错误不应重试；提交发布或创建任务的 POST，超时不代表服务端没执行，盲目重试可能重复操作。
+
+当前项目不自动重试、不自动跟随 3xx 重定向，避免把实际检查目标和执行次数变得不明确。项目的 GET 也只应指向你有权限检查、符合读取语义的地址。
+
+练习：某 POST 超时后应立刻无限重试吗？答案：不应。应先查询任务状态，后续引入请求标识和幂等控制。
+
+## 第 6 课：接收请求与输入校验
+
+Handler 继承 BaseHTTPRequestHandler，do_GET/do_POST 是父类约定的入口。self.path 包含路径与查询，urlsplit 后取 path 才适合路由比较。
+
+POST 处理顺序：确认路径 → 检查 Content-Type → 检查长度与读取方式 → 读取字节 → 解码 → JSON 解析 → 校验结构和字段 → 执行业务 → 返回 JSON。
+
+本项目只接受 `{"ids": ["self"]}`。ids 必须为 1 到 5 个已配置目标，不能重复。客户端提交任意 URL 会被拒绝；实际 URL 由服务端可信配置决定，这样接口不变成任意地址探测入口。命令行直接检查模式则由运行者明确选择地址。
+
+只判断 JSON 是否有效不够：数字、字符串、空列表也是有效 JSON，但未必符合接口契约。还必须检查类型和允许值。
+
+练习：分别提交空对象、空 ids、未知 id、重复 id 和文本体。预期前四种为 400，声明 text/plain 的文本体为 415。
+
+## 第 7 课：保存结果与并发
+
+GET /api/results 返回最后一批结果；尚未运行时是空列表。这里保存在内存，重启丢失，下一单元改为数据库持久化。
+
+ThreadingHTTPServer 为不同连接使用线程，内存状态会被多个请求访问。result_lock 保护结果读写；check_lock 同时只允许一个巡检批次，忙时返回 409。
+
+这里的 Lock 是对象，acquire 获得锁，release 释放。把 release 放在 finally，避免错误时永远不释放。不要执行网络请求时一直占着结果锁，否则读取结果也会被拖住。
+
+本例同步完成巡检后返回 200，不返回“任务已排队”。真正的排队、状态轮询与后台进程在第八单元实现，不能用线程服务就宣称已经有任务队列。
+
+## 第 8 课：运行完整项目
+
+详见 [项目说明](项目/04-网站巡检/README.md)。默认目标 self 指向本服务自己的健康接口。采用多线程服务，处理 POST 的线程等待时，另一个线程可以回答健康请求。
+
+阅读顺序：client.main → server.Handler.do_POST → checker.run_checks → checker.check_url → reply → 客户端解析。
+
+练习一：增加一个已配置的本地目标，巡检两个目标。步骤答案：在 main 的 targets 增加名称与 URL，客户端 ids 增加对应名称；不要把任意 URL 参数直接交给后端。
+
+练习二：把未知接口返回结果改为带 code 字段的结构。答案：在 404 的 reply 字典增加固定 code，如 NOT_FOUND，客户端按字段读取；HTTP 状态仍为 404。
+
+练习三：统计成功、告警、失败数量。答案：遍历 results，按 status 分别累计；不能只用 HTTP 200 的数量作为 API 调用是否成功的判断。
+
+通过标准：能画出完整请求顺序；能用浏览器读取 GET、用 Python 提交 POST；能解释 TCP 字节与 JSON 对象的转换；能区分 404、超时、连接拒绝；能说明结果重启丢失的原因。
+
+## 来源、限制与后续
+
+基础 API 核对 [http.client](https://docs.python.org/3/library/http.client.html) 和 [http.server](https://docs.python.org/3/library/http.server.html)。TCP 实操使用本地实际下载的 Real Python 改写示例及其许可证。
+
+本服务只绑定本机，用于课程，不是生产 HTTP 服务器；没有认证、持久化、限流或完整请求线程上限。来源资料未整章复制，项目为本地编写。下一单元实现 SQL、SQLite 和资产 API。

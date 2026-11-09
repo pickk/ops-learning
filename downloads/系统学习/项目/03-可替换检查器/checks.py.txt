@@ -1,0 +1,54 @@
+"""Small check objects with a shared result contract."""
+import math
+import os
+import shutil
+
+
+class BaseCheck:
+    def __init__(self, name):
+        self.name = name
+
+    def evaluate(self):
+        raise NotImplementedError("子类需要实现 evaluate")
+
+    def run(self):
+        try:
+            data = self.evaluate()
+            if not isinstance(data, dict):
+                raise ValueError("检查结果必须是字典")
+            if not isinstance(data.get("ok"), bool):
+                raise ValueError("检查结果必须包含布尔值 ok")
+            if not isinstance(data.get("detail"), str):
+                raise ValueError("检查结果必须包含文本 detail")
+            status = "ok"
+            if not data["ok"]:
+                status = "alert"
+            return {"name": self.name, "status": status, "detail": data["detail"]}
+        except (OSError, ValueError) as error:
+            return {"name": self.name, "status": "error", "detail": str(error)}
+
+
+class DiskCheck(BaseCheck):
+    def __init__(self, path, threshold):
+        BaseCheck.__init__(self, "disk")
+        if isinstance(threshold, bool) or not isinstance(threshold, (int, float)):
+            raise ValueError("阈值必须是数字")
+        if not math.isfinite(threshold) or threshold < 0 or threshold > 100:
+            raise ValueError("阈值必须在 0 到 100 之间")
+        self.path = path
+        self.threshold = threshold
+
+    def evaluate(self):
+        usage = shutil.disk_usage(self.path)
+        percent = usage.used / usage.total * 100
+        return {"ok": percent < self.threshold,
+                "detail": "磁盘使用率 " + str(round(percent, 2)) + "%"}
+
+
+class FileCheck(BaseCheck):
+    def __init__(self, path):
+        BaseCheck.__init__(self, "file")
+        self.path = path
+
+    def evaluate(self):
+        return {"ok": os.path.isfile(self.path), "detail": "普通文件检查：" + self.path}

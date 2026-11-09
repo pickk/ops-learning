@@ -1,0 +1,4 @@
+[
+  {"name": "web-01", "online": true},
+  {"name": "db-01", "online": false}
+]

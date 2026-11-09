@@ -1,0 +1,154 @@
+import json
+import os
+import re
+import socket
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+from pathlib import Path
+from check_project import request, start, stop
+from jobs import JobEngine, run_command
+from storage import DomainError, Store
+
+
+def await_job(port, job_id):
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        status, job = request(port, "GET", "/api/jobs/" + str(job_id))
+        assert status == 200
+        if job["state"] not in ["queued", "running"]:
+            return job
+        time.sleep(0.05)
+    raise AssertionError("任务未结束")
+
+
+def expect_error(engine, value, expected):
+    try:
+        engine.submit(value)
+    except DomainError as error:
+        assert error.status == expected
+    else:
+        raise AssertionError("预期拒绝")
+
+
+def main():
+    lesson = Path(__file__).parents[2] / "第八单元-运维任务队列与执行.md"
+    examples = re.findall(r"```python\n(.*?)```", lesson.read_text(encoding="utf-8"), re.S)
+    expected = ["队列已满\n检查 web01\n检查 web02", "主线程准备完成\n工作线程开始检查\n所有工作结束", "直接子进程已因超时结束"]
+    assert len(examples) == len(expected)
+    for number in range(len(examples)):
+        result = subprocess.run([sys.executable, "-X", "utf8", "-c", examples[number]], capture_output=True, text=True, encoding="utf-8", timeout=5)
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == expected[number]
+    directory = tempfile.TemporaryDirectory()
+    server, thread = start(os.path.join(directory.name, "http.sqlite3"))
+    listener = socket.socket()
+    try:
+        port = server.server_port
+        listener.bind(("127.0.0.1", 0))
+        listener.listen(5)
+        asset = {"name": "local-listener", "host": "127.0.0.1", "port": listener.getsockname()[1], "environment": "test"}
+        status, asset = request(port, "POST", "/api/assets", asset)
+        assert status == 201
+        status, job = request(port, "POST", "/api/jobs", {"task": "tcp_connect", "asset_id": asset["id"]})
+        assert status == 202
+        done = await_job(port, job["id"])
+        assert done["state"] == "succeeded" and done["result"]["connected"] is True
+        accepted, address = listener.accept()
+        accepted.close()
+        listener.close()
+        status, failed = request(port, "POST", "/api/jobs", {"task": "tcp_connect", "asset_id": asset["id"]})
+        assert status == 202
+        assert await_job(port, failed["id"])["state"] == "failed"
+        status, disk = request(port, "POST", "/api/jobs", {"task": "disk_usage", "asset_id": None})
+        assert status == 202
+        disk = await_job(port, disk["id"])
+        assert disk["state"] == "succeeded" and disk["result"]["total_bytes"] > 0
+        states = []
+        for event in disk["events"]:
+            states.append(event["state"])
+        assert states == ["queued", "running", "succeeded"]
+        for value in [{"task": "shell", "asset_id": None}, {"task": "disk_usage", "asset_id": None, "command": "whoami"}, {"task": "tcp_connect", "asset_id": True}]:
+            assert request(port, "POST", "/api/jobs", value)[0] == 400
+        assert request(port, "POST", "/api/jobs", {"task": "tcp_connect", "asset_id": 999999})[0] == 404
+        assert request(port, "DELETE", "/api/jobs/1")[0] == 405
+        assert request(port, "GET", "/api/jobs/999999")[0] == 404
+    finally:
+        listener.close()
+        stop(server, thread)
+
+    store = Store(os.path.join(directory.name, "queue.sqlite3"))
+    engine = JobEngine(store, workers=0, capacity=2)
+    try:
+        first = engine.submit({"task": "disk_usage", "asset_id": None})
+        second = engine.submit({"task": "disk_usage", "asset_id": None})
+        assert first["state"] == "queued"
+        expect_error(engine, {"task": "disk_usage", "asset_id": None}, 429)
+        claimed = engine.claim()
+        assert claimed["id"] == first["id"]
+        try:
+            duplicate = JobEngine(store, workers=0)
+        except OSError:
+            pass
+        else:
+            duplicate.close()
+            raise AssertionError("同一数据库不能有两个任务引擎")
+    finally:
+        engine.close()
+    engine = JobEngine(store, workers=0)
+    try:
+        assert engine.get(first["id"])["state"] == "failed"
+        assert engine.get(second["id"])["state"] == "queued"
+        assert engine.claim()["id"] == second["id"]
+        state, output = run_command([sys.executable, "-c", "import time; time.sleep(5)"], 0.15)
+        assert state == "timed_out"
+        engine.finish(second["id"], state, output)
+        assert engine.get(second["id"])["state"] == "timed_out"
+    finally:
+        engine.close()
+
+    gate = threading.Event()
+    lock = threading.Lock()
+    seen = []
+    active = [0, 0]
+
+    def controlled_executor(job):
+        lock.acquire()
+        try:
+            active[0] = active[0] + 1
+            active[1] = max(active[0], active[1])
+            seen.append(job["id"])
+        finally:
+            lock.release()
+        gate.wait(5)
+        lock.acquire()
+        active[0] = active[0] - 1
+        lock.release()
+        return "succeeded", {"controlled_test": True}
+
+    engine = JobEngine(Store(os.path.join(directory.name, "concurrency.sqlite3")), workers=2, executor=controlled_executor)
+    try:
+        ids = []
+        for number in range(4):
+            ids.append(engine.submit({"task": "disk_usage", "asset_id": None})["id"])
+        deadline = time.monotonic() + 5
+        while len(seen) < 2 and time.monotonic() < deadline:
+            time.sleep(0.02)
+        assert len(seen) == 2 and active[1] == 2
+        assert engine.get(ids[2])["state"] == "queued"
+        gate.set()
+        deadline = time.monotonic() + 5
+        while engine.get(ids[3])["state"] != "succeeded" and time.monotonic() < deadline:
+            time.sleep(0.02)
+        assert len(seen) == 4 and len(set(seen)) == 4 and active[1] == 2
+    finally:
+        gate.set()
+        engine.close()
+        directory.cleanup()
+    print("PASS: lesson examples, real TCP/disk, HTTP whitelist, states/audit, capacity, single engine, restart recovery, real subprocess timeout, worker concurrency")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,96 @@
+import http.client
+import json
+import os
+import sqlite3
+import tempfile
+import threading
+from server import create_server
+
+
+def request(port, method, path, value=None, raw=None, media="application/json"):
+    body = raw
+    if value is not None:
+        body = json.dumps(value).encode("utf-8")
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+    try:
+        connection.request(method, path, body, {"Content-Type": media})
+        response = connection.getresponse()
+        return response.status, json.loads(response.read().decode("utf-8"))
+    finally:
+        connection.close()
+
+
+def start(path):
+    server = create_server(("127.0.0.1", 0), path)
+    thread = threading.Thread(target=server.serve_forever)
+    thread.start()
+    return server, thread
+
+
+def stop(server, thread):
+    server.shutdown()
+    server.server_close()
+    thread.join()
+
+
+def main():
+    directory = tempfile.TemporaryDirectory()
+    path = os.path.join(directory.name, "test.sqlite3")
+    server, thread = start(path)
+    try:
+        port = server.server_port
+        asset = {"name": "web01", "host": "127.0.0.1", "port": 80, "environment": "test"}
+        status, result = request(port, "POST", "/api/assets", asset)
+        assert status == 201
+        item_path = "/api/assets/" + str(result["id"])
+        assert request(port, "POST", "/api/assets", asset)[0] == 409
+        for key, value in [("port", True), ("port", 0), ("environment", "other"), ("name", "")]:
+            invalid = dict(asset)
+            invalid[key] = value
+            assert request(port, "POST", "/api/assets", invalid)[0] == 400
+        assert request(port, "POST", "/api/assets", {"name": "only"})[0] == 400
+        for query in ["limit=0", "offset=-1", "limit=x", "limit=1&limit=2", "unknown=1"]:
+            assert request(port, "GET", "/api/assets?" + query)[0] == 400
+        assert request(port, "POST", "/api/assets", raw=b"{")[0] == 400
+        assert request(port, "POST", "/api/assets", asset, media="text/plain")[0] == 415
+        assert request(port, "POST", "/api/assets", raw=b"x" * 8193)[0] == 413
+        assert request(port, "GET", "/api/assets/999999")[0] == 404
+        assert request(port, "DELETE", "/api/assets")[0] == 405
+        asset["name"] = "x'); DROP TABLE assets; --"
+        assert request(port, "PUT", item_path, asset)[1]["name"] == asset["name"]
+        status, page = request(port, "GET", "/api/assets?limit=1&offset=1")
+        assert status == 200 and page["total"] == 1 and page["items"] == []
+
+        connection = sqlite3.connect(path, isolation_level=None)
+        try:
+            connection.execute("CREATE TRIGGER fail_audit BEFORE INSERT ON audit BEGIN SELECT RAISE(ABORT, 'test failure'); END")
+            asset["name"] = "must-rollback"
+            assert request(port, "PUT", item_path, asset)[0] == 409
+            assert request(port, "GET", item_path)[1]["name"] != "must-rollback"
+            assert connection.execute("SELECT COUNT(*) FROM audit").fetchone()[0] == 2
+            connection.execute("DROP TRIGGER fail_audit")
+            connection.execute("BEGIN IMMEDIATE")
+            assert request(port, "DELETE", item_path)[0] == 503
+            connection.rollback()
+        finally:
+            connection.close()
+        stop(server, thread)
+        server, thread = start(path)
+        port = server.server_port
+        assert request(port, "GET", item_path)[0] == 200
+        assert request(port, "DELETE", item_path)[0] == 200
+        assert request(port, "GET", item_path)[0] == 404
+        connection = sqlite3.connect(path)
+        try:
+            assert connection.execute("SELECT COUNT(*) FROM assets").fetchone()[0] == 0
+            assert connection.execute("SELECT COUNT(*) FROM audit").fetchone()[0] == 3
+        finally:
+            connection.close()
+        print("PASS: CRUD, validation, pagination, SQL parameters, rollback, lock, server recreation, audit")
+    finally:
+        stop(server, thread)
+        directory.cleanup()
+
+
+if __name__ == "__main__":
+    main()

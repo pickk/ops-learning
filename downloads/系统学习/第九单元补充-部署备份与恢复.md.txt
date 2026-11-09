@@ -1,0 +1,166 @@
+# 第九单元补充：部署、备份与恢复
+
+日期：2026-11-08
+
+背景：登录平台能在终端运行，还不等于能长期维护。本章把进程、文件权限、代理、日志和恢复连成操作流程。前置为第三单元 Linux、第六单元事务及[第九单元身份部分](第九单元-登录权限与部署.md)。
+
+状态：备份/恢复工具及真实进程生命周期已验证；systemd 模板语法已验证。当前环境没有 Nginx，尚未验证 Nginx 配置运行、实际 TLS、证书续期及系统服务安装。本章明确区分操作模板与已经执行的证据。
+
+## 1. 运行时需要哪些东西
+
+| 内容 | 示例位置 | 谁可修改 |
+| --- | --- | --- |
+| 版本代码 | /opt/ops-course/releases/v1 | 发布管理员 |
+| 当前版本链接 | /opt/ops-course/current | 发布管理员 |
+| SQLite 与锁/日志辅助文件 | /var/lib/ops-course | 平台服务账户 |
+| 非秘密配置 | /etc/ops-course.env | 管理员 |
+| TLS 私钥 | /etc/ops-course/tls/privkey.pem | 证书/代理管理账户 |
+| 数据备份 | /var/backups/ops-course | 备份管理员 |
+
+代码不应与数据库一起覆盖发布。SQLite 不只需要数据库文件可写：创建 journal、WAL、锁文件时，所在目录也需要写权限。给数据库 chmod 777 不能代替正确的账户与目录设计。
+
+平台不需要 root 身份来处理请求或启动只读任务。示例 systemd 使用独立 opscourse 用户，限制写入目录。数据库中含密码派生值、会话摘要和资产地址；备份也必须按敏感文件管理，不能放网页静态目录。
+
+练习：如果代码可被平台进程随意修改，白名单脚本能否可靠限制执行内容？不能，攻击者或误操作可能直接改脚本。因此运行账户应只读代码。
+
+## 2. 配置、秘密和公开来源
+
+本项目只有端口、数据库路径、公开 origin 等运行参数。密码通过 auth.py 的隐藏输入创建，不能写入命令行、Git、systemd 的 ExecStart 或示例 env 文件。环境变量不是天然保密容器；它可被有权限的进程和诊断工具读取。
+
+`OPS_ORIGIN=https://ops.example.test` 表示浏览器实际访问来源，不是后端监听地址。代理访问 Python 的地址仍为 127.0.0.1:8096。HTTPS 来源与转发 Host 必须一致，否则身份层会拒绝请求。
+
+现在检查 [ops-course.env.example](项目/05-资产API/deploy/ops-course.env.example) 与 [服务模板](项目/05-资产API/deploy/ops-course.service)。模板无账号密码。准备新环境时把示例域名换成自己控制且有正确证书的域名。
+
+## 3. 在独立 Linux 实验机准备目录
+
+下面是供学习者在专用实验机执行的流程，本次没有自动修改宿主机用户或系统服务。先确认系统已有 Python 3、sqlite3 模块、systemd 和 Nginx；不同发行版使用自己的包管理方式。
+
+```sh
+sudo useradd --system --home-dir /var/lib/ops-course --shell /usr/sbin/nologin opscourse
+sudo install -d -m 0755 /opt/ops-course/releases/v1
+sudo install -d -o opscourse -g opscourse -m 0700 /var/lib/ops-course
+sudo install -d -m 0700 /var/backups/ops-course
+```
+
+用户已存在时不重复创建。将项目中的 .py 文件和 web 目录复制到 v1，保留导入关系；不要复制自己的 SQLite、Cookie、缓存或测试截图。代码归发布管理员所有，服务账户只需读权限。创建 current 链接前先检查该路径不存在或已明确属于这个实验项目：
+
+```sh
+sudo ln -s /opt/ops-course/releases/v1 /opt/ops-course/current
+sudo -u opscourse python3 /opt/ops-course/current/auth.py --db /var/lib/ops-course/platform.sqlite3 --username myadmin --role admin
+```
+
+注意 useradd、复制发布代码和链接切换是环境管理动作，不能在不清楚现有目录用途时照抄。独立版本目录使回退代码更容易，但数据库兼容性仍要另外核对。
+
+## 4. 用 systemd 管理进程
+
+模板中的 Type=simple 表示启动命令就是主进程。Restart=on-failure 在异常失败后重启，RestartSec 避免立即高频重启。它不会修好错误密码、损坏数据库或配置拼写。
+
+KillMode=mixed 先通知主进程终止；secure_server.py 处理 SIGTERM 进入收尾，等待当前检查结束。超过 TimeoutStopSec 后 systemd 可终止整个控制组，避免子进程无限残留。当前检查有有限执行时限，但进程创建本身不保证硬实时截止。
+
+安装前修改 env 的域名，再执行：
+
+```sh
+sudo install -m 0644 deploy/ops-course.service /etc/systemd/system/ops-course.service
+sudo install -m 0600 deploy/ops-course.env.example /etc/ops-course.env
+sudo systemd-analyze verify /etc/systemd/system/ops-course.service
+sudo systemctl daemon-reload
+sudo systemctl start ops-course
+sudo systemctl status ops-course --no-pager
+sudo journalctl -u ops-course -n 50 --no-pager
+```
+
+确认业务可用后再决定是否 `sudo systemctl enable ops-course` 开机启动。停止使用 `sudo systemctl stop ops-course`，查看是否 inactive；不要用删除锁文件来“停止服务”。
+
+UMask=0077 限制新文件权限。ProtectSystem/ProtectHome 等减少文件写入范围，ReadWritePaths 仅开放数据目录。它们不是容器或完整沙箱，也不替代应用授权。
+
+练习：服务不停重启，先把 Restart 改成 always 是否合理？不合理。先查日志与退出原因，修正路径、权限或端口冲突；自动重启只是恢复机制。
+
+## 5. 反向代理与 TLS 的责任
+
+浏览器 → HTTPS 代理 → 本机 HTTP Python。TLS 在代理终止；后端只监听回环地址。代理负责证书、连接与请求限制，Python 继续负责身份、CSRF、角色和业务校验，不能因为有代理就关闭这些检查。
+
+[Nginx 配置模板](项目/05-资产API/deploy/nginx.conf.example)放在 http 配置范围内，替换域名及证书路径。它保留 Host、限制登录频率和连接数、限制消息体，关闭代理对写请求的自动换上游重试。使用前执行：
+
+```sh
+sudo nginx -t
+sudo systemctl reload nginx
+curl --fail https://ops.example.test/api/health
+```
+
+必须使用受信任且域名匹配的证书。内部实验 CA 可以在测试客户端显式指定 `curl --cacert /path/to/lab-ca.pem ...`；不要用关闭证书验证作为正常部署步骤。证书从自己的 CA 或证书服务申请，私钥不提交 Git；续期后重新加载代理并再次检查到期时间及 HTTPS 登录。
+
+先用正确 Host 查看后端有无响应：`curl --fail -H 'Host: ops.example.test' http://127.0.0.1:8096/api/health`。这只是后端检查，不证明 HTTPS 可用。
+
+HTTPS 上登录成功后检查 Cookie 带 Secure、HttpOnly、SameSite；错误 Origin 写请求应为 403。代理传入的 Origin 仍应是原浏览器来源，不要伪造一个总能通过的固定 Origin。不要把密码或 Cookie 加入访问日志格式。
+
+当前使用标准库 http.server 教学实现。加代理不会自动变成经过生产加固的服务器。真实业务应在掌握本课程后迁移到维护中的生产服务栈，并做威胁、容量和运维评审。本课程需要你理解部署链路，并完成实验环境验收，不承诺公网生产安全。
+
+## 6. 看日志定位问题
+
+安全入口向标准错误输出 JSON 请求事件，包含方法、状态码和已验证操作者，不记录密码、请求体、查询串、Cookie 或 CSRF。任务引擎发生数据库错误会记录错误类型；具体任务结果在 jobs 表。
+
+| 症状 | 排查顺序 |
+| --- | --- |
+| 502 | Python 进程、监听端口、代理上游地址 |
+| 400 Host 不匹配 | --origin 的主机端口与代理 Host |
+| 登录后 401 | Cookie 是否发送、Secure 与协议、会话是否过期/被替换 |
+| 写入 403 | Origin、CSRF、角色；不要直接放宽所有限制 |
+| 503 | 数据库目录权限、磁盘空间、锁占用、日志 |
+| 任务停在 running | 结果写库是否失败，核对实际执行后恢复 |
+
+日志不应无限增长。systemd-journald 的保留由系统策略管理；实际部署要为访问日志、审计表和任务历史设置容量与保留期。当前项目没有自动清理历史审计的任务，先不要随意删除证据。
+
+## 7. 在线备份：不能只复制一个正在写入的文件
+
+WAL 模式下，刚提交的数据可能在 -wal 文件。对运行中的数据库只复制主文件可能得到旧数据或不一致的文件组合。backup.py 使用 SQLite 的备份接口读取一致快照，并做 integrity_check。
+
+```text
+python backup.py backup --source secure.sqlite3 --destination backup-20261108-1600.sqlite3
+```
+
+目标必须不存在，父目录必须存在。工具不会覆盖已有文件；源缺失不会创建空数据库冒充备份。它先检查必需表，复制后再检查完整性。复制阶段设等待时限，完整性扫描本身不受该时限约束；当前适用于小型课程数据库。
+
+Linux 新文件默认仅所有者读写；Windows 还要检查目标目录 ACL，不要假定 Unix 的 0600 就能设置 Windows 权限。备份含密码派生值、资产及审计，是敏感数据。
+
+工具退出 0 才表示成功。复制过程中目标路径可能已经存在，因此调度器不能仅凭“文件存在”宣布完成。工具异常会清理自己创建的未完成文件；断电或强制杀进程则可能留下不完整文件，需要再次校验，不能直接恢复使用。
+
+备份频率由可接受数据损失决定：一天一次最多可能丢一天变更；恢复时间取决于下载、校验、启动和人工核对。记录备份时间、代码版本、文件摘要和恢复演练结果；把副本放到不同故障域并测试恢复，不能只留在同一硬盘。
+
+## 8. 恢复到新文件，再切换
+
+```text
+python backup.py restore --source backup-20261108-1600.sqlite3 --destination recovered.sqlite3
+python secure_server.py --db recovered.sqlite3 --port 8098
+```
+
+恢复不覆盖运行库。新文件保留用户密码派生值、资产、完成的任务与审计，但撤销所有会话和登录限速记录；queued/running 改为带恢复说明的 failed，避免把备份中的待办自动执行一遍。
+
+在 8098 登录，核对资产数、关键资产、角色、完成任务和恢复事件。旧 Cookie 应被拒绝，需要重新登录。恢复后的临时服务可能接受新写入，因此应隔离使用并明确演练数据不要回灌生产。
+
+正式切换前：停止原服务、确认没有占用库的进程、保留原文件；将启动配置指向已验收的新文件或在停机条件下改名切换，再启动并复核。不要在线覆盖数据库主文件，也不要遗漏旧 WAL/SHM 与主文件的一致性。模板 ExecStart 的 --db 是切换配置位置，改动后须 daemon-reload。
+
+练习：恢复成功后为什么不自动重跑 queued？备份可能早于任务实际执行；盲目重跑可能重复副作用。应核对后重新提交新的任务编号。
+
+## 9. 升级与回退
+
+升级前先记录当前代码提交、备份数据库，并在恢复副本上运行新版本。版本 v2 放入独立目录，测试后停止服务、切换 current 链接、启动并复核。链接切换命令例如 `sudo ln -sfn /opt/ops-course/releases/v2 /opt/ops-course/current`，只适用于已确认 current 是本项目符号链接的场景。
+
+代码回退可切回 v1，但若 v2 修改了数据库格式，旧代码未必能读取。必须事先验证向后兼容或准备升级前备份的恢复方案。恢复旧备份会丢失备份后的新变更，因此回退决策需要明确可接受损失，不能只追求进程能启动。
+
+当前身份升级仅新增 actor/submitted_by 列并标记旧记录，没有通用迁移版本管理器。后续扩展字段应增加迁移编号、验证和回退策略，不要删除数据库重新建表来掩盖升级问题。
+
+## 10. 练习、答案与验收证据
+
+练习 A：在数据库开启 WAL 且存在未提交更新时备份，应该包含未提交值吗？不应该，只包含一致的已提交状态。check_backup.py 实际覆盖此场景。
+
+练习 B：备份路径已经存在时应覆盖吗？本工具拒绝，原文件字节保持不变；用新文件名建立可追溯历史。
+
+练习 C：systemd verify 返回 0 是否等于完成部署？不等于。还要验证账户/目录权限、实际启动、代理、TLS、登录、任务和恢复。
+
+练习 D：独立完成“创建资产 → 备份 → 修改资产 → 恢复到新库 → 登录核对旧值”。说明为何这是恢复验证，而仅检查文件大小不是。
+
+已核实：check_backup.py 在 Windows 与 Linux 通过，验证在线 WAL 快照、恢复后真实 HTTP 登录和资产读取、撤销会话、不重放任务、拒绝覆盖/同路径/缺失/损坏文件，以及 Linux 文件权限。check_lifecycle.py 在 Linux 通过，实际启动独立进程、SIGTERM 退出 0、重启保留数据和会话、释放引擎锁、日志不含测试秘密。
+
+systemd-analyze verify 模板返回 0；WSL 挂载的仓库文件被报告具有可执行和全局可写权限，正式安装步骤用 install -m 0644 修正单位文件权限。本次未安装服务。Nginx 不在现有环境，故 Nginx/TLS 运行验证尚未完成，不能把模板文件当成运行证据。
+
+来源与限制：[Python SQLite 备份接口](https://docs.python.org/3/library/sqlite3.html)、[systemd 服务配置](https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html)、[Nginx 代理配置](https://nginx.org/en/docs/http/ngx_http_proxy_module.html)、[Python TLS 校验说明](https://docs.python.org/3/library/ssl.html)。这些来源用于核对机制，模板适用于本课程设计；不同发行版路径、CA 和服务策略须在目标实验环境再次核对。

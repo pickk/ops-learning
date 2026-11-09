@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>资产工作台 · 运维编程课程</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header><p class="eyebrow">运维编程课程 / 07—08</p><h1>资产与巡检工作台</h1><p>维护服务器清单，提交只读检查，查看执行状态与结果。</p></header>
+    <p id="identity" class="notice">本地基础课程入口 · 未启用登录</p><button id="logout" type="button" class="secondary" hidden>退出登录</button>
+    <p id="message" role="status" aria-live="polite">正在读取资产…</p>
+    <div class="layout">
+      <section aria-labelledby="editor-title">
+        <h2 id="editor-title">新增资产</h2>
+        <form id="asset-form">
+          <fieldset id="editor-fields">
+            <label for="name">资产名称</label><input id="name" required maxlength="80" placeholder="例如 web01">
+            <label for="host">主机地址</label><input id="host" required maxlength="253" placeholder="例如 127.0.0.1">
+            <label for="port">端口</label><input id="port" type="number" required min="1" max="65535" step="1" value="80">
+            <label for="environment">环境</label><select id="environment"><option value="dev">开发 dev</option><option value="test">测试 test</option><option value="prod">生产 prod</option></select>
+            <div class="actions"><button type="submit" id="save">保存资产</button><button type="button" id="cancel" class="secondary">清空 / 取消编辑</button></div>
+          </fieldset>
+        </form>
+      </section>
+      <section aria-labelledby="list-title">
+        <div class="heading"><h2 id="list-title">服务器清单</h2><button id="refresh" class="secondary" type="button">刷新列表</button></div>
+        <p id="count">尚未加载</p>
+        <div class="table-wrap"><table><thead><tr><th>名称 / 编号</th><th>地址</th><th>环境</th><th>操作</th></tr></thead><tbody id="rows"></tbody></table></div>
+        <p id="empty" hidden>还没有资产。填写左侧表单添加第一台服务器。</p>
+        <div class="actions"><button id="previous" class="secondary" type="button">上一页</button><span id="page">第 1 页</span><button id="next" class="secondary" type="button">下一页</button></div>
+        <div id="delete-panel" class="notice" hidden><p id="delete-description"></p><button id="confirm-delete" type="button">确认删除</button> <button id="cancel-delete" type="button" class="secondary">保留资产</button></div>
+      </section>
+    </div>
+    <section class="task-section" aria-labelledby="tasks-title">
+      <h2 id="tasks-title">巡检任务</h2>
+      <p>同时最多执行 2 个任务，等待与运行合计最多 20 个。TCP 检查只连接已登记资产的 IPv4 端口。</p>
+      <form id="task-form">
+        <label for="task-kind">检查内容</label><select id="task-kind"><option value="disk_usage">平台本机磁盘容量</option><option value="tcp_connect">资产 TCP 端口连接</option></select>
+        <label for="task-asset">资产编号（TCP 检查时填写）</label><input id="task-asset" type="number" min="1" step="1" disabled>
+        <div class="actions"><button id="submit-task" type="submit">提交巡检</button><button id="refresh-jobs" type="button" class="secondary">刷新任务记录</button></div>
+      </form>
+      <p id="task-message" role="status" aria-live="polite">可提交检查或查看最近 20 条记录。</p>
+      <div class="table-wrap"><table><thead><tr><th>任务编号</th><th>检查类型</th><th>状态</th><th>操作</th></tr></thead><tbody id="job-rows"></tbody></table></div>
+      <h3>任务详情</h3><pre id="job-detail">选择一条记录查看结果。执行中的任务会自动更新。</pre>
+    </section>
+    <section id="audit-panel" class="task-section" hidden><h2>操作审计</h2><p>仅管理员可查看各类最近 50 条记录；任务详情另含状态变化。</p><button id="refresh-audit" type="button" class="secondary">读取审计记录</button><pre id="audit-result">点击读取，查看资产变更、账户事件与任务提交。</pre></section>
+    <footer>数据保存于服务端 SQLite 文件。地址字段只登记，不会自动连接服务器。</footer>
+  </main>
+</body>
+</html>

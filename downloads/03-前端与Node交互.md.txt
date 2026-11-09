@@ -1,0 +1,81 @@
+# 03 前端和 Node：用同一份 Python 数据
+
+更新日期：2026-11-08
+
+## 先分清三个角色
+
+- 浏览器：执行 HTML、CSS 和前端 JavaScript，显示页面。
+- Python：接收 HTTP 请求，返回 JSON。
+- Node.js：在浏览器外运行 JavaScript；本例是另一个接口客户端。
+
+浏览器可以直接请求 Python，不需要先经过 Node。普通 Node 脚本里没有浏览器 document；普通网页脚本也不能直接使用 Node 的 require。
+
+## 浏览器只学这五步
+
+1. `document.getElementById` 获取按钮和输出元素。
+2. `addEventListener` 注册点击后执行的函数。
+3. XMLHttpRequest 发 GET 请求。
+4. 收到响应后判断 status，再 JSON.parse。
+5. textContent 显示结果。
+
+对照 [page.html](examples/page.html) 和 [browser.js](examples/browser.js)。重点读：
+
+```javascript
+var button = document.getElementById('load');
+button.addEventListener('click', loadServers);
+```
+
+传 `loadServers` 是注册函数，等点击再运行；写 `loadServers()` 会立即执行。
+
+```javascript
+var request = new XMLHttpRequest();
+request.open('GET', '/api/servers');
+request.onload = function () {
+    if (request.status === 200) {
+        var data = JSON.parse(request.responseText);
+        console.log(data.servers[0].name);
+    }
+};
+request.send();
+```
+
+这是核心流程，不含完整异常处理；完整示例还处理加载中、超时、连接失败和 JSON 格式错误。onload 的函数是回调，网络返回后才执行；404 也可能触发 onload，所以仍要判断状态码。
+
+## JSON 只记两个方向
+
+| 动作 | JavaScript | Python |
+| --- | --- | --- |
+| 对象变文本 | JSON.stringify | json.dumps |
+| 文本变对象 | JSON.parse | json.loads |
+
+两边通过 HTTP 和 JSON 交换数据，不共享变量，不是 JS 直接调用 Python 函数。
+
+## Node 只读这条链
+
+运行 `node examples/node-client.js`，按顺序看：
+
+```text
+require('http') → http.get → 收到 response
+    → data 事件收集片段 → end 事件解析 JSON → console.log
+```
+
+响应可能分多段到达，不能收到第一个 data 就解析完整 JSON。注册 error 处理失败；设置超时后，示例主动 destroy 请求来结束它。
+
+Node 的事件回调和浏览器的事件回调，都是“事件发生后调用函数”。Node 用 on，浏览器常用 addEventListener；名称不同，思路相近。
+
+## 先避开跨域问题
+
+从 http://127.0.0.1:8091 打开页面，脚本请求相对地址 /api/servers；页面与接口同源，不用额外配置 CORS。不要双击 HTML 用 file:// 打开。8080 和 8091 是不同源。
+
+## 动手、验收和排错
+
+给 Python 返回的每台机器加 port 字段，再修改网页和 Node 输出端口。验收：同一字段在两种客户端都正确显示。
+
+失败时依次查：Python 是否启动 → 浏览器直接访问接口 → Network 的路径和状态 → Console 报错 → JSON 字段名是否一致。
+
+## 来源与下一步
+
+- [mdn/curriculum：JavaScript 基础](https://github.com/mdn/curriculum/blob/main/curriculum/3-core/6-javascript-fundamentals.md)：筛选事件、DOM、请求和 JSON 目标。原资料讲 fetch；本地为遵守基础语法约定，继续用 XMLHttpRequest，并非原文代码照搬。
+- [nodejs/node：HTTP 文档](https://github.com/nodejs/node/blob/v24.x/doc/api/http.md)：只看 http.get 的 JSON 响应示例与 error/timeout，略过 Agent 等高级配置。
+
+待办：读通 GET 后再做表单 POST。React/Vue、打包工具、Promise 与 async/await 暂缓。

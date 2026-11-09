@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="从 Python 基础到运维平台开发：连续课程、动手练习与可下载的项目源码。"><meta name="theme-color" content="#163a35"><title>从零到运维脚本与运维平台：课程交付与验收 · 运维编程手册</title><link rel="icon" href="../assets/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="../assets/style.css"><link rel="stylesheet" href="../assets/highlight.css"><script defer src="../assets/app.js" data-root="../"></script></head>
+<body><a class="skip" href="#main">跳到正文</a><aside class="sidebar" id="sidebar"><a class="brand" href="../index.html"><span class="brand-icon">&gt;_</span><span>运维编程手册<small>从第一行代码开始</small></span></a><a class="sidebar-home " href="../index.html">⌂ 学习首页</a><p class="nav-label">系统课程 <span>10 单元</span></p><nav aria-label="系统课程"><a class="nav-lesson " href="%E7%AC%AC%E4%B8%80%E5%8D%95%E5%85%83-Python%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80.html" ><span>01</span>Python 编程基础</a><a class="nav-lesson " href="%E7%AC%AC%E4%BA%8C%E5%8D%95%E5%85%83-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E6%96%87%E4%BB%B6%E5%A4%84%E7%90%86.html" ><span>02</span>数据结构与文件处理</a><a class="nav-lesson " href="%E7%AC%AC%E4%B8%89%E5%8D%95%E5%85%83-Linux%E4%B8%8E%E8%BF%90%E7%BB%B4%E8%84%9A%E6%9C%AC%E5%B7%A5%E7%A8%8B.html" ><span>03</span>Linux 与运维脚本</a><a class="nav-lesson " href="%E7%AC%AC%E5%9B%9B%E5%8D%95%E5%85%83-%E7%B1%BB%E7%BB%A7%E6%89%BF%E4%B8%8E%E6%A8%A1%E5%9D%97%E7%BB%84%E7%BB%87.html" ><span>04</span>类、继承与模块</a><a class="nav-lesson " href="%E7%AC%AC%E4%BA%94%E5%8D%95%E5%85%83-%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E4%B8%8EHTTP%E6%8E%A5%E5%8F%A3.html" ><span>05</span>网络编程与 HTTP</a><a class="nav-lesson " href="%E7%AC%AC%E5%85%AD%E5%8D%95%E5%85%83-%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%8E%E8%B5%84%E4%BA%A7%E7%AE%A1%E7%90%86%E5%90%8E%E7%AB%AF.html" ><span>06</span>数据库与资产 API</a><a class="nav-lesson " href="%E7%AC%AC%E4%B8%83%E5%8D%95%E5%85%83-%E5%89%8D%E7%AB%AF%E4%B8%8ENode%E4%BA%A4%E4%BA%92.html" ><span>07</span>前端与 Node 交互</a><a class="nav-lesson " href="%E7%AC%AC%E5%85%AB%E5%8D%95%E5%85%83-%E8%BF%90%E7%BB%B4%E4%BB%BB%E5%8A%A1%E9%98%9F%E5%88%97%E4%B8%8E%E6%89%A7%E8%A1%8C.html" ><span>08</span>任务队列与执行</a><a class="nav-lesson " href="%E7%AC%AC%E4%B9%9D%E5%8D%95%E5%85%83-%E7%99%BB%E5%BD%95%E6%9D%83%E9%99%90%E4%B8%8E%E9%83%A8%E7%BD%B2.html" ><span>09</span>登录权限与部署</a><a class="nav-lesson " href="%E7%AC%AC%E5%8D%81%E5%8D%95%E5%85%83-%E7%BB%BC%E5%90%88%E5%AE%9E%E6%88%98%E4%B8%8E%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91.html" ><span>10</span>综合实战与独立开发</a></nav><p class="nav-label">动手与查阅</p><nav class="extras" aria-label="参考资料"><a href="../projects.html">实战项目与源码 <span>05</span></a><a href="%E7%AC%AC%E4%B9%9D%E5%8D%95%E5%85%83%E8%A1%A5%E5%85%85-%E9%83%A8%E7%BD%B2%E5%A4%87%E4%BB%BD%E4%B8%8E%E6%81%A2%E5%A4%8D.html">部署、备份与恢复</a><a href="../%E4%B8%8B%E8%BD%BD%E8%B5%84%E6%96%99/index.html">作者资料与练习</a><a href="../notes.html">补充笔记</a></nav><div class="sidebar-footer"><span class="status-dot"></span>循序渐进 · 动手验证</div></aside>
+<div class="page"><header class="topbar"><button class="menu-toggle" aria-label="展开目录" aria-controls="sidebar" aria-expanded="false">☰</button><div class="breadcrumb">学习手册 <span>/</span> 学习笔记</div><button class="search-trigger" aria-label="搜索课程"><span>⌕</span> 搜索课程、概念或代码 <kbd>/</kbd></button></header><main id="main" class="reader"><article class="prose"><h1 id="从零到运维脚本与运维平台课程交付与验收">从零到运维脚本与运维平台：课程交付与验收</h1>
+<p>日期：2026-11-08</p>
+<h2 id="目标与边界">目标与边界</h2>
+<p>用户目标：获得一整套系统学习资料，能据此独立编写运维脚本与运维平台。课程从变量开始，不以精简速记或单个示例代替完整教学。这里验收的是教材与配套项目是否完整、可运行、可学习；是否真正掌握还需要学习者独立完成练习。</p>
+<h2 id="全部交付要求">全部交付要求</h2>
+<p>每个单元都必须有前置知识、连续讲解、执行过程、可运行例子、练习、参考答案、常见错误和通过标准。主线使用基础语法；第三方原资料的简写须解释或改写，来源及许可证需保留。</p>
+<table>
+<thead>
+<tr>
+<th>单元</th>
+<th>必须覆盖</th>
+<th>阶段交付</th>
+<th>当前状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 Python 基础</td>
+<td>变量、类型、条件、循环、函数、作用域</td>
+<td>使用率检查</td>
+<td>已有课程及代码块运行证据</td>
+</tr>
+<tr>
+<td>2 数据与文件</td>
+<td>字符串、容器、JSON、路径、文件、异常、模块</td>
+<td>服务器清单报告</td>
+<td>课程与项目已有，9 个 CLI 场景通过</td>
+</tr>
+<tr>
+<td>3 Linux 与脚本工程</td>
+<td>文件权限、进程、环境变量、退出码、参数、日志、子进程、超时、幂等、定时任务</td>
+<td>可配置巡检 CLI</td>
+<td>课程与工具已有，CLI 隔离验证通过；实际定时部署待综合阶段</td>
+</tr>
+<tr>
+<td>4 类与程序组织</td>
+<td>类、对象、self、初始化、继承、组合、模块拆分、调用链、测试</td>
+<td>可替换的检查器</td>
+<td>课程与项目已完成，六个独立代码块及项目验证通过</td>
+</tr>
+<tr>
+<td>5 网络与接口</td>
+<td>DNS/IP/端口、TCP、HTTP/HTTPS、JSON、客户端、GET/POST、错误、重试边界</td>
+<td>批量网站巡检与结果接口</td>
+<td>课程与项目已有，本地 HTTP 集成验证通过；TLS 场景尚未验证</td>
+</tr>
+<tr>
+<td>6 数据库与后端</td>
+<td>SQL、SQLite、参数绑定、事务、CRUD、输入校验、分页、错误响应</td>
+<td>资产管理 API</td>
+<td>课程与项目已有；真实 HTTP、事务回滚、写锁与服务重建持久化验证通过，未验证崩溃恢复</td>
+</tr>
+<tr>
+<td>7 前端与 Node</td>
+<td>HTML/CSS、JS 类型、DOM、表单、事件、回调、JSON、同源、Node 客户端与工具角色</td>
+<td>资产页面与接口联调</td>
+<td>课程与页面已有；真实 Chromium CRUD、分页、离线恢复、Node 调用及独立 HTML/JS 示例验证通过；未覆盖其他浏览器</td>
+</tr>
+<tr>
+<td>8 运维任务平台</td>
+<td>任务白名单、队列、工作进程、状态、超时、并发上限、执行结果、审计</td>
+<td>网页提交巡检并查询结果</td>
+<td>课程与任务引擎已有；Windows/Linux 验证队列、真实检查、超时、并发，浏览器提交和结果查询通过；恢复测试为预置状态后重建，未覆盖断电</td>
+</tr>
+<tr>
+<td>9 权限与部署</td>
+<td>登录、密码哈希、会话、角色、服务端授权、CSRF、配置秘密、反向代理、TLS、systemd、备份恢复</td>
+<td>本地可验收的登录平台与部署手册</td>
+<td>身份课程、部署手册及模板已有；权限与浏览器流程通过；Windows/Linux 备份恢复、Linux 独立进程重启和 SIGTERM 通过，systemd 语法通过。Nginx/TLS 临时实验已通过（2026-11-09）；系统服务安装未验证</td>
+</tr>
+<tr>
+<td>10 综合项目</td>
+<td>分层、版本管理、故障定位、集成测试、需求扩展、运维手册</td>
+<td>完整脚本工具集与运维平台</td>
+<td>综合课程及管理员审计已补齐；整套最终审查仍在进行，见 2026-11-09 阶段证据</td>
+</tr>
+</tbody>
+</table>
+<p>最终平台必须覆盖资产增删改查、登录与权限、预定义任务执行、结果查询、审计和错误处理。不能用任意命令执行框代替任务设计；不能用静态页面或模拟提交代替真实后端。</p>
+<h2 id="验收方法">验收方法</h2>
+<ol>
+<li>脚本：有效与错误输入、缺文件、不可写路径、超时、重复运行、退出码和日志都有运行证据。</li>
+<li>后端：数据库真实持久化，重启后能恢复；接口输入校验、权限拒绝和事务行为有检查。</li>
+<li>前端：能在浏览器真实完成资产维护、任务提交和状态查询；网络失败有可恢复提示。</li>
+<li>任务：不能绕过白名单；能区分等待、运行、成功、失败和超时；并发受控。</li>
+<li>部署：有环境准备、启动、停止、日志查询、升级回退、备份与恢复命令及适用限制。</li>
+<li>教学：每个练习可以沿着课程前置知识完成；完整答案与验收结果可核对，未实现项目必须标明。</li>
+<li>来源：从 GitHub 实际下载的材料可追溯；只保留教学相关章节和必要依赖、许可证。</li>
+</ol>
+<h2 id="当前事实与后续">当前事实与后续</h2>
+<p>第一单元已有 20 个示例运行证据。旧速记、下载源码和展示网站是参考，不代表整套课程或完整运维平台已交付。第二单元从服务器清单过渡到第一个真正读写文件的脚本；后续按表继续建设。</p>
+<p>本文件持续作为完成审查依据。总目标保持进行中，不能因为单元完成就宣称整套完成。来源：用户目标、仓库已有课程与下载清单。</p>
+</article><footer class="page-footer"><span>运维编程手册</span><span>读概念 → 预测输出 → 动手运行 → 独立练习</span></footer></main><aside class="toc" aria-label="本页目录"><p>本页目录</p><a class="h2" href="#目标与边界">目标与边界</a><a class="h2" href="#全部交付要求">全部交付要求</a><a class="h2" href="#验收方法">验收方法</a><a class="h2" href="#当前事实与后续">当前事实与后续</a></aside></div>
+<dialog class="search-dialog"><form method="dialog" class="search-head"><label class="visually-hidden" for="search-input">搜索课程</label><input id="search-input" type="search" placeholder="搜索课程、概念或代码…" autocomplete="off"><button aria-label="关闭搜索">Esc</button></form><div class="search-results" aria-live="polite"><p>输入关键词，查找课程与配套源码。</p></div></dialog></body></html>

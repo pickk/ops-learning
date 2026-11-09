@@ -1,0 +1,31 @@
+"use strict";
+var http = require("node:http");
+var port = 8095;
+if (process.argv.length > 2) { port = Number(process.argv[2]); }
+if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    console.error("端口必须是 1 到 65535 的整数");
+    process.exit(2);
+}
+var timer;
+var request = http.get({hostname: "127.0.0.1", port: port, path: "/api/assets?limit=5&offset=0"}, function (response) {
+    var body = "";
+    response.setEncoding("utf8");
+    response.on("data", function (chunk) {
+        body = body + chunk;
+        if (body.length > 1000000) { request.destroy(new Error("响应过大")); }
+    });
+    response.on("error", function (error) { clearTimeout(timer); console.error(error.message); process.exitCode = 1; });
+    response.on("end", function () {
+        clearTimeout(timer);
+        if (response.statusCode !== 200) { console.error("HTTP " + response.statusCode); process.exitCode = 1; return; }
+        try {
+            var result = JSON.parse(body);
+            console.log("资产总数：" + result.total);
+            for (var i = 0; i < result.items.length; i = i + 1) {
+                console.log(result.items[i].name + " " + result.items[i].host + ":" + result.items[i].port);
+            }
+        } catch (error) { console.error("响应解析失败：" + error.message); process.exitCode = 1; }
+    });
+});
+timer = setTimeout(function () { request.destroy(new Error("请求超过 5 秒")); }, 5000);
+request.on("error", function (error) { clearTimeout(timer); console.error("请求失败：" + error.message); process.exitCode = 1; });

@@ -1,0 +1,455 @@
+{
+  "sourceRoot": "运维学习/代码/",
+  "files": [
+    {
+      "source": "运维学习/代码/01-Python数据结构.md",
+      "page": "01-Python数据结构.html",
+      "download": "downloads/01-Python数据结构.md.txt"
+    },
+    {
+      "source": "运维学习/代码/02-Python网络编程.md",
+      "page": "02-Python网络编程.html",
+      "download": "downloads/02-Python网络编程.md.txt"
+    },
+    {
+      "source": "运维学习/代码/03-前端与Node交互.md",
+      "page": "03-前端与Node交互.html",
+      "download": "downloads/03-前端与Node交互.md.txt"
+    },
+    {
+      "source": "运维学习/代码/04-练习与验收.md",
+      "page": "04-练习与验收.html",
+      "download": "downloads/04-练习与验收.md.txt"
+    },
+    {
+      "source": "运维学习/代码/GitHub资料筛选-2026-11-08.md",
+      "page": "GitHub资料筛选-2026-11-08.html",
+      "download": "downloads/GitHub资料筛选-2026-11-08.md.txt"
+    },
+    {
+      "source": "运维学习/代码/README.md",
+      "page": "index.html",
+      "download": "downloads/README.md.txt"
+    },
+    {
+      "source": "运维学习/代码/do_GET从头理解-2026-11-08.md",
+      "page": "do_GET从头理解-2026-11-08.html",
+      "download": "downloads/do_GET从头理解-2026-11-08.md.txt"
+    },
+    {
+      "source": "运维学习/代码/examples/browser.js",
+      "page": "source/examples/browser.js.html",
+      "download": "downloads/examples/browser.js.txt"
+    },
+    {
+      "source": "运维学习/代码/examples/client.py",
+      "page": "source/examples/client.py.html",
+      "download": "downloads/examples/client.py.txt"
+    },
+    {
+      "source": "运维学习/代码/examples/node-client.js",
+      "page": "source/examples/node-client.js.html",
+      "download": "downloads/examples/node-client.js.txt"
+    },
+    {
+      "source": "运维学习/代码/examples/page.html",
+      "page": "source/examples/page.html.html",
+      "download": "downloads/examples/page.html.txt"
+    },
+    {
+      "source": "运维学习/代码/examples/server.py",
+      "page": "source/examples/server.py.html",
+      "download": "downloads/examples/server.py.txt"
+    },
+    {
+      "source": "运维学习/代码/examples/structures.py",
+      "page": "source/examples/structures.py.html",
+      "download": "downloads/examples/structures.py.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/01-Python/LICENSE",
+      "page": "source/下载资料/01-Python/LICENSE.html",
+      "download": "downloads/下载资料/01-Python/LICENSE.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/01-Python/src/data_types/test_dictionaries.py",
+      "page": "source/下载资料/01-Python/src/data_types/test_dictionaries.py.html",
+      "download": "downloads/下载资料/01-Python/src/data_types/test_dictionaries.py.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/01-Python/src/data_types/test_lists.py",
+      "page": "source/下载资料/01-Python/src/data_types/test_lists.py.html",
+      "download": "downloads/下载资料/01-Python/src/data_types/test_lists.py.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/01-Python/src/data_types/test_sets.py",
+      "page": "source/下载资料/01-Python/src/data_types/test_sets.py.html",
+      "download": "downloads/下载资料/01-Python/src/data_types/test_sets.py.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/01-Python/src/data_types/test_tuples.py",
+      "page": "source/下载资料/01-Python/src/data_types/test_tuples.py.html",
+      "download": "downloads/下载资料/01-Python/src/data_types/test_tuples.py.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/02-网络/LICENSE",
+      "page": "source/下载资料/02-网络/LICENSE.html",
+      "download": "downloads/下载资料/02-网络/LICENSE.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/02-网络/python-sockets-tutorial/echo-client.py",
+      "page": "source/下载资料/02-网络/python-sockets-tutorial/echo-client.py.html",
+      "download": "downloads/下载资料/02-网络/python-sockets-tutorial/echo-client.py.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/02-网络/python-sockets-tutorial/echo-server.py",
+      "page": "source/下载资料/02-网络/python-sockets-tutorial/echo-server.py.html",
+      "download": "downloads/下载资料/02-网络/python-sockets-tutorial/echo-server.py.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/03-Node/LICENSE.md",
+      "page": "下载资料/03-Node/LICENSE.html",
+      "download": "downloads/下载资料/03-Node/LICENSE.md.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/03-Node/exercises/http_client/problem.zh-cn.md",
+      "page": "下载资料/03-Node/exercises/http_client/problem.zh-cn.html",
+      "download": "downloads/下载资料/03-Node/exercises/http_client/problem.zh-cn.md.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/03-Node/exercises/http_client/solution/solution.js",
+      "page": "source/下载资料/03-Node/exercises/http_client/solution/solution.js.html",
+      "download": "downloads/下载资料/03-Node/exercises/http_client/solution/solution.js.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/03-Node/exercises/http_json_api_server/problem.zh-cn.md",
+      "page": "下载资料/03-Node/exercises/http_json_api_server/problem.zh-cn.html",
+      "download": "downloads/下载资料/03-Node/exercises/http_json_api_server/problem.zh-cn.md.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/03-Node/exercises/http_json_api_server/solution/solution.js",
+      "page": "source/下载资料/03-Node/exercises/http_json_api_server/solution/solution.js.html",
+      "download": "downloads/下载资料/03-Node/exercises/http_json_api_server/solution/solution.js.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/04-浏览器/LICENSE",
+      "page": "source/下载资料/04-浏览器/LICENSE.html",
+      "download": "downloads/下载资料/04-浏览器/LICENSE.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/04-浏览器/fetch-finish.html",
+      "page": "source/下载资料/04-浏览器/fetch-finish.html.html",
+      "download": "downloads/下载资料/04-浏览器/fetch-finish.html.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/04-浏览器/verse1.txt",
+      "page": "source/下载资料/04-浏览器/verse1.txt.html",
+      "download": "downloads/下载资料/04-浏览器/verse1.txt.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/04-浏览器/verse2.txt",
+      "page": "source/下载资料/04-浏览器/verse2.txt.html",
+      "download": "downloads/下载资料/04-浏览器/verse2.txt.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/04-浏览器/verse3.txt",
+      "page": "source/下载资料/04-浏览器/verse3.txt.html",
+      "download": "downloads/下载资料/04-浏览器/verse3.txt.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/04-浏览器/verse4.txt",
+      "page": "source/下载资料/04-浏览器/verse4.txt.html",
+      "download": "downloads/下载资料/04-浏览器/verse4.txt.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/README.md",
+      "page": "下载资料/index.html",
+      "download": "downloads/下载资料/README.md.txt"
+    },
+    {
+      "source": "运维学习/代码/下载资料/下载清单.json",
+      "page": "source/下载资料/下载清单.json.html",
+      "download": "downloads/下载资料/下载清单.json.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/README.md",
+      "page": "系统学习/index.html",
+      "download": "downloads/系统学习/README.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/代理TLS与综合项目验证-2026-11-09.md",
+      "page": "系统学习/代理TLS与综合项目验证-2026-11-09.html",
+      "download": "downloads/系统学习/代理TLS与综合项目验证-2026-11-09.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/整套课程建设与验收-2026-11-08.md",
+      "page": "系统学习/整套课程建设与验收-2026-11-08.html",
+      "download": "downloads/系统学习/整套课程建设与验收-2026-11-08.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/第一单元-Python编程基础.md",
+      "page": "系统学习/第一单元-Python编程基础.html",
+      "download": "downloads/系统学习/第一单元-Python编程基础.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/第七单元-前端与Node交互.md",
+      "page": "系统学习/第七单元-前端与Node交互.html",
+      "download": "downloads/系统学习/第七单元-前端与Node交互.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/第三单元-Linux与运维脚本工程.md",
+      "page": "系统学习/第三单元-Linux与运维脚本工程.html",
+      "download": "downloads/系统学习/第三单元-Linux与运维脚本工程.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/第九单元-登录权限与部署.md",
+      "page": "系统学习/第九单元-登录权限与部署.html",
+      "download": "downloads/系统学习/第九单元-登录权限与部署.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/第九单元补充-部署备份与恢复.md",
+      "page": "系统学习/第九单元补充-部署备份与恢复.html",
+      "download": "downloads/系统学习/第九单元补充-部署备份与恢复.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/第二单元-数据结构与文件处理.md",
+      "page": "系统学习/第二单元-数据结构与文件处理.html",
+      "download": "downloads/系统学习/第二单元-数据结构与文件处理.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/第五单元-网络编程与HTTP接口.md",
+      "page": "系统学习/第五单元-网络编程与HTTP接口.html",
+      "download": "downloads/系统学习/第五单元-网络编程与HTTP接口.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/第八单元-运维任务队列与执行.md",
+      "page": "系统学习/第八单元-运维任务队列与执行.html",
+      "download": "downloads/系统学习/第八单元-运维任务队列与执行.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/第六单元-数据库与资产管理后端.md",
+      "page": "系统学习/第六单元-数据库与资产管理后端.html",
+      "download": "downloads/系统学习/第六单元-数据库与资产管理后端.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/第十单元-综合实战与独立开发.md",
+      "page": "系统学习/第十单元-综合实战与独立开发.html",
+      "download": "downloads/系统学习/第十单元-综合实战与独立开发.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/第四单元-类继承与模块组织.md",
+      "page": "系统学习/第四单元-类继承与模块组织.html",
+      "download": "downloads/系统学习/第四单元-类继承与模块组织.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/01-清单报告/README.md",
+      "page": "系统学习/项目/01-清单报告/index.html",
+      "download": "downloads/系统学习/项目/01-清单报告/README.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/01-清单报告/inventory_report.py",
+      "page": "source/系统学习/项目/01-清单报告/inventory_report.py.html",
+      "download": "downloads/系统学习/项目/01-清单报告/inventory_report.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/01-清单报告/servers.json",
+      "page": "source/系统学习/项目/01-清单报告/servers.json.html",
+      "download": "downloads/系统学习/项目/01-清单报告/servers.json.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/02-本机巡检/README.md",
+      "page": "系统学习/项目/02-本机巡检/index.html",
+      "download": "downloads/系统学习/项目/02-本机巡检/README.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/02-本机巡检/check_project.py",
+      "page": "source/系统学习/项目/02-本机巡检/check_project.py.html",
+      "download": "downloads/系统学习/项目/02-本机巡检/check_project.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/02-本机巡检/config.json",
+      "page": "source/系统学习/项目/02-本机巡检/config.json.html",
+      "download": "downloads/系统学习/项目/02-本机巡检/config.json.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/02-本机巡检/inspect_host.py",
+      "page": "source/系统学习/项目/02-本机巡检/inspect_host.py.html",
+      "download": "downloads/系统学习/项目/02-本机巡检/inspect_host.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/02-本机巡检/sample.txt",
+      "page": "source/系统学习/项目/02-本机巡检/sample.txt.html",
+      "download": "downloads/系统学习/项目/02-本机巡检/sample.txt.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/03-可替换检查器/README.md",
+      "page": "系统学习/项目/03-可替换检查器/index.html",
+      "download": "downloads/系统学习/项目/03-可替换检查器/README.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/03-可替换检查器/check_project.py",
+      "page": "source/系统学习/项目/03-可替换检查器/check_project.py.html",
+      "download": "downloads/系统学习/项目/03-可替换检查器/check_project.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/03-可替换检查器/checks.py",
+      "page": "source/系统学习/项目/03-可替换检查器/checks.py.html",
+      "download": "downloads/系统学习/项目/03-可替换检查器/checks.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/03-可替换检查器/main.py",
+      "page": "source/系统学习/项目/03-可替换检查器/main.py.html",
+      "download": "downloads/系统学习/项目/03-可替换检查器/main.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/03-可替换检查器/runner.py",
+      "page": "source/系统学习/项目/03-可替换检查器/runner.py.html",
+      "download": "downloads/系统学习/项目/03-可替换检查器/runner.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/04-网站巡检/README.md",
+      "page": "系统学习/项目/04-网站巡检/index.html",
+      "download": "downloads/系统学习/项目/04-网站巡检/README.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/04-网站巡检/check_project.py",
+      "page": "source/系统学习/项目/04-网站巡检/check_project.py.html",
+      "download": "downloads/系统学习/项目/04-网站巡检/check_project.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/04-网站巡检/checker.py",
+      "page": "source/系统学习/项目/04-网站巡检/checker.py.html",
+      "download": "downloads/系统学习/项目/04-网站巡检/checker.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/04-网站巡检/client.py",
+      "page": "source/系统学习/项目/04-网站巡检/client.py.html",
+      "download": "downloads/系统学习/项目/04-网站巡检/client.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/04-网站巡检/server.py",
+      "page": "source/系统学习/项目/04-网站巡检/server.py.html",
+      "download": "downloads/系统学习/项目/04-网站巡检/server.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/README.md",
+      "page": "系统学习/项目/05-资产API/index.html",
+      "download": "downloads/系统学习/项目/05-资产API/README.md.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/auth.py",
+      "page": "source/系统学习/项目/05-资产API/auth.py.html",
+      "download": "downloads/系统学习/项目/05-资产API/auth.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/backup.py",
+      "page": "source/系统学习/项目/05-资产API/backup.py.html",
+      "download": "downloads/系统学习/项目/05-资产API/backup.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/check_auth.py",
+      "page": "source/系统学习/项目/05-资产API/check_auth.py.html",
+      "download": "downloads/系统学习/项目/05-资产API/check_auth.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/check_backup.py",
+      "page": "source/系统学习/项目/05-资产API/check_backup.py.html",
+      "download": "downloads/系统学习/项目/05-资产API/check_backup.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/check_browser.cjs",
+      "page": "source/系统学习/项目/05-资产API/check_browser.cjs.html",
+      "download": "downloads/系统学习/项目/05-资产API/check_browser.cjs.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/check_jobs.py",
+      "page": "source/系统学习/项目/05-资产API/check_jobs.py.html",
+      "download": "downloads/系统学习/项目/05-资产API/check_jobs.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/check_lifecycle.py",
+      "page": "source/系统学习/项目/05-资产API/check_lifecycle.py.html",
+      "download": "downloads/系统学习/项目/05-资产API/check_lifecycle.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/check_project.py",
+      "page": "source/系统学习/项目/05-资产API/check_project.py.html",
+      "download": "downloads/系统学习/项目/05-资产API/check_project.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/check_tls.py",
+      "page": "source/系统学习/项目/05-资产API/check_tls.py.html",
+      "download": "downloads/系统学习/项目/05-资产API/check_tls.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/deploy/nginx.conf.example",
+      "page": "source/系统学习/项目/05-资产API/deploy/nginx.conf.example.html",
+      "download": "downloads/系统学习/项目/05-资产API/deploy/nginx.conf.example.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/deploy/ops-course.env.example",
+      "page": "source/系统学习/项目/05-资产API/deploy/ops-course.env.example.html",
+      "download": "downloads/系统学习/项目/05-资产API/deploy/ops-course.env.example.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/deploy/ops-course.service",
+      "page": "source/系统学习/项目/05-资产API/deploy/ops-course.service.html",
+      "download": "downloads/系统学习/项目/05-资产API/deploy/ops-course.service.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/jobs.py",
+      "page": "source/系统学习/项目/05-资产API/jobs.py.html",
+      "download": "downloads/系统学习/项目/05-资产API/jobs.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/node_client.cjs",
+      "page": "source/系统学习/项目/05-资产API/node_client.cjs.html",
+      "download": "downloads/系统学习/项目/05-资产API/node_client.cjs.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/secure_server.py",
+      "page": "source/系统学习/项目/05-资产API/secure_server.py.html",
+      "download": "downloads/系统学习/项目/05-资产API/secure_server.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/server.py",
+      "page": "source/系统学习/项目/05-资产API/server.py.html",
+      "download": "downloads/系统学习/项目/05-资产API/server.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/storage.py",
+      "page": "source/系统学习/项目/05-资产API/storage.py.html",
+      "download": "downloads/系统学习/项目/05-资产API/storage.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/task_worker.py",
+      "page": "source/系统学习/项目/05-资产API/task_worker.py.html",
+      "download": "downloads/系统学习/项目/05-资产API/task_worker.py.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/web/app.js",
+      "page": "source/系统学习/项目/05-资产API/web/app.js.html",
+      "download": "downloads/系统学习/项目/05-资产API/web/app.js.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/web/index.html",
+      "page": "source/系统学习/项目/05-资产API/web/index.html.html",
+      "download": "downloads/系统学习/项目/05-资产API/web/index.html.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/web/login.html",
+      "page": "source/系统学习/项目/05-资产API/web/login.html.html",
+      "download": "downloads/系统学习/项目/05-资产API/web/login.html.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/web/login.js",
+      "page": "source/系统学习/项目/05-资产API/web/login.js.html",
+      "download": "downloads/系统学习/项目/05-资产API/web/login.js.txt"
+    },
+    {
+      "source": "运维学习/代码/系统学习/项目/05-资产API/web/style.css",
+      "page": "source/系统学习/项目/05-资产API/web/style.css.html",
+      "download": "downloads/系统学习/项目/05-资产API/web/style.css.txt"
+    }
+  ]
+}

@@ -1,0 +1,263 @@
+"use strict";
+
+var editingId = null;
+var deletingId = null;
+var busy = false;
+var offset = 0;
+var limit = 5;
+var total = 0;
+var listReady = false;
+var csrfToken = null;
+
+function element(id) { return document.getElementById(id); }
+
+function message(text, error) {
+    element("message").textContent = text;
+    element("message").className = "";
+    if (error) { element("message").className = "error"; }
+}
+
+function setBusy(value) {
+    busy = value;
+    element("editor-fields").disabled = value;
+    var buttons = document.querySelectorAll(".layout button, #refresh");
+    for (var i = 0; i < buttons.length; i = i + 1) { buttons[i].disabled = value; }
+    element("previous").disabled = value || !listReady || offset === 0;
+    element("next").disabled = value || !listReady || offset + limit >= total;
+}
+
+function request(method, path, data, done) {
+    var xhr = new XMLHttpRequest();
+    xhr.open(method, path);
+    if (csrfToken !== null && method !== "GET") { xhr.setRequestHeader("X-CSRF-Token", csrfToken); }
+    xhr.timeout = 6000;
+    xhr.onload = function () {
+        var result;
+        try { result = JSON.parse(xhr.responseText); }
+        catch (error) { done("服务器响应不是有效 JSON；请刷新列表核对状态。", null); return; }
+        if (xhr.status < 200 || xhr.status >= 300) {
+            done("请求失败（" + xhr.status + "）：" + result.error, null);
+            return;
+        }
+        done(null, result);
+    };
+    xhr.onerror = function () { done("无法连接服务。请检查服务是否启动，再刷新列表。写入结果需核对后再重试。", null); };
+    xhr.ontimeout = function () { done("请求超时。写入可能已经完成，请先刷新列表核对，避免重复提交。", null); };
+    if (data === null) { xhr.send(); }
+    else {
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.send(JSON.stringify(data));
+    }
+}
+
+function resetEditor() {
+    editingId = null;
+    element("asset-form").reset();
+    element("editor-title").textContent = "新增资产";
+}
+
+function hideDelete() {
+    deletingId = null;
+    element("delete-panel").hidden = true;
+}
+
+function appendCell(row, text) {
+    var cell = document.createElement("td");
+    cell.textContent = text;
+    row.appendChild(cell);
+    return cell;
+}
+
+function makeRow(asset) {
+    var row = document.createElement("tr");
+    appendCell(row, asset.name + " / #" + asset.id);
+    appendCell(row, asset.host + ":" + asset.port);
+    appendCell(row, asset.environment);
+    var actions = appendCell(row, "");
+    var edit = document.createElement("button");
+    edit.type = "button";
+    edit.className = "secondary";
+    edit.textContent = "编辑";
+    edit.addEventListener("click", function () {
+        if (busy) { return; }
+        hideDelete();
+        editingId = asset.id;
+        element("name").value = asset.name;
+        element("host").value = asset.host;
+        element("port").value = asset.port;
+        element("environment").value = asset.environment;
+        element("editor-title").textContent = "编辑资产 #" + asset.id;
+        element("name").focus();
+    });
+    var remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "secondary";
+    remove.textContent = "删除";
+    remove.addEventListener("click", function () {
+        if (busy) { return; }
+        deletingId = asset.id;
+        element("delete-description").textContent = "确认删除「" + asset.name + "」？这只删除清单记录，不操作实际服务器。";
+        element("delete-panel").hidden = false;
+        element("confirm-delete").focus();
+    });
+    actions.appendChild(edit);
+    actions.appendChild(remove);
+    return row;
+}
+
+function loadAssets(successMessage) {
+    setBusy(true);
+    hideDelete();
+    message("正在读取资产…", false);
+    request("GET", "/api/assets?limit=" + limit + "&offset=" + offset, null, function (error, data) {
+        if (error !== null) { listReady = false; setBusy(false); message(error + " 当前列表可能已过期。", true); return; }
+        total = data.total;
+        if (offset > 0 && offset >= total) {
+            offset = Math.max(0, offset - limit);
+            loadAssets(successMessage);
+            return;
+        }
+        element("rows").textContent = "";
+        for (var i = 0; i < data.items.length; i = i + 1) { element("rows").appendChild(makeRow(data.items[i])); }
+        element("empty").hidden = total !== 0;
+        element("count").textContent = "共 " + total + " 台 · 每页 " + limit + " 台";
+        element("page").textContent = "第 " + (Math.floor(offset / limit) + 1) + " 页";
+        listReady = true;
+        setBusy(false);
+        message(successMessage, false);
+    });
+}
+
+element("asset-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    if (busy) { return; }
+    var data = {name: element("name").value.trim(), host: element("host").value.trim(), port: Number(element("port").value), environment: element("environment").value};
+    if (!data.name || !data.host || !Number.isInteger(data.port) || data.port < 1 || data.port > 65535) {
+        message("请填写非空名称、地址和有效整数端口。", true);
+        return;
+    }
+    var method = "POST";
+    var path = "/api/assets";
+    if (editingId !== null) { method = "PUT"; path = path + "/" + editingId; }
+    setBusy(true);
+    hideDelete();
+    request(method, path, data, function (error, result) {
+        if (error !== null) { setBusy(false); message(error, true); return; }
+        resetEditor();
+        offset = 0;
+        loadAssets("已保存资产 #" + result.id + "。列表已刷新。");
+    });
+});
+
+element("cancel").addEventListener("click", resetEditor);
+element("cancel-delete").addEventListener("click", hideDelete);
+element("confirm-delete").addEventListener("click", function () {
+    if (busy || deletingId === null) { return; }
+    var id = deletingId;
+    setBusy(true);
+    request("DELETE", "/api/assets/" + id, null, function (error) {
+        if (error !== null) { setBusy(false); message(error, true); return; }
+        if (editingId === id) { resetEditor(); }
+        hideDelete();
+        loadAssets("已删除资产 #" + id + "。");
+    });
+});
+element("refresh").addEventListener("click", function () { if (!busy) { loadAssets("列表已刷新。"); } });
+element("previous").addEventListener("click", function () { if (!busy && offset > 0) { offset = offset - limit; loadAssets("已切换页面。"); } });
+element("next").addEventListener("click", function () { if (!busy && offset + limit < total) { offset = offset + limit; loadAssets("已切换页面。"); } });
+
+var selectedJob = null;
+var pollTimer = null;
+var jobGeneration = 0;
+var taskBusy = false;
+var stateLabels = {queued: "等待中", running: "运行中", succeeded: "成功", failed: "失败", timed_out: "超时"};
+
+function taskMessage(text) { element("task-message").textContent = text; }
+
+function showJob(id) {
+    selectedJob = id;
+    jobGeneration = jobGeneration + 1;
+    var generation = jobGeneration;
+    clearTimeout(pollTimer);
+    request("GET", "/api/jobs/" + id, null, function (error, data) {
+        if (generation !== jobGeneration) { return; }
+        if (error !== null) { taskMessage(error + " 点击查看结果可重试。"); return; }
+        element("job-detail").textContent = "任务 #" + id + " · " + stateLabels[data.state] + "\n" + JSON.stringify(data, null, 2);
+        if (data.state === "queued" || data.state === "running") {
+            pollTimer = setTimeout(function () { showJob(id); }, 1000);
+        } else { loadJobs(); }
+    });
+}
+
+function jobRow(job) {
+    var row = document.createElement("tr");
+    appendCell(row, "#" + job.id);
+    appendCell(row, job.task);
+    appendCell(row, stateLabels[job.state]);
+    var cell = appendCell(row, "");
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "secondary";
+    button.textContent = "查看结果";
+    button.addEventListener("click", function () { showJob(job.id); });
+    cell.appendChild(button);
+    return row;
+}
+
+function loadJobs() {
+    request("GET", "/api/jobs", null, function (error, data) {
+        if (error !== null) { taskMessage(error); return; }
+        element("job-rows").textContent = "";
+        for (var i = 0; i < data.items.length; i = i + 1) { element("job-rows").appendChild(jobRow(data.items[i])); }
+    });
+}
+
+element("task-kind").addEventListener("change", function () {
+    var tcp = element("task-kind").value === "tcp_connect";
+    element("task-asset").disabled = !tcp;
+    element("task-asset").required = tcp;
+});
+element("task-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    if (taskBusy) { return; }
+    var task = element("task-kind").value;
+    var assetId = null;
+    if (task === "tcp_connect") {
+        assetId = Number(element("task-asset").value);
+        if (!Number.isSafeInteger(assetId) || assetId < 1) { taskMessage("请输入有效资产编号。"); return; }
+    }
+    taskBusy = true;
+    element("submit-task").disabled = true;
+    request("POST", "/api/jobs", {task: task, asset_id: assetId}, function (error, data) {
+        taskBusy = false;
+        element("submit-task").disabled = false;
+        if (error !== null) { taskMessage(error); return; }
+        taskMessage("已接收任务 #" + data.id + "，接收成功不代表执行成功。");
+        loadJobs();
+        showJob(data.id);
+    });
+});
+element("refresh-jobs").addEventListener("click", function () { loadJobs(); if (selectedJob !== null) { showJob(selectedJob); } });
+element("logout").addEventListener("click", function () {
+    request("POST", "/api/logout", {}, function (error) {
+        if (error !== null) { message(error, true); return; }
+        window.location.reload();
+    });
+});
+request("GET", "/api/me", null, function (error, user) {
+    if (error !== null) { message(error + " 请重新载入页面登录。", true); return; }
+    csrfToken = user.csrf;
+    if (csrfToken !== null) {
+        element("identity").textContent = "当前用户：" + user.username + " · " + user.role + "。viewer 只读；operator 可提交任务；admin 可维护资产。";
+        element("logout").hidden = false;
+        element("audit-panel").hidden = user.role !== "admin";
+    }
+    loadAssets("列表已加载。");
+    loadJobs();
+});
+element("refresh-audit").addEventListener("click", function () {
+    request("GET", "/api/audit", null, function (error, data) {
+        if (error !== null) { element("audit-result").textContent = error; return; }
+        element("audit-result").textContent = JSON.stringify(data, null, 2);
+    });
+});

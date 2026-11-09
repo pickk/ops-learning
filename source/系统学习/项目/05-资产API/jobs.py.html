@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="从 Python 基础到运维平台开发：连续课程、动手练习与可下载的项目源码。"><meta name="theme-color" content="#163a35"><title>jobs.py · 运维编程手册</title><link rel="icon" href="../../../../assets/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="../../../../assets/style.css"><link rel="stylesheet" href="../../../../assets/highlight.css"><script defer src="../../../../assets/app.js" data-root="../../../../"></script></head>
+<body><a class="skip" href="#main">跳到正文</a><aside class="sidebar" id="sidebar"><a class="brand" href="../../../../index.html"><span class="brand-icon">&gt;_</span><span>运维编程手册<small>从第一行代码开始</small></span></a><a class="sidebar-home " href="../../../../index.html">⌂ 学习首页</a><p class="nav-label">系统课程 <span>10 单元</span></p><nav aria-label="系统课程"><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%B8%80%E5%8D%95%E5%85%83-Python%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80.html" ><span>01</span>Python 编程基础</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%BA%8C%E5%8D%95%E5%85%83-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E6%96%87%E4%BB%B6%E5%A4%84%E7%90%86.html" ><span>02</span>数据结构与文件处理</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%B8%89%E5%8D%95%E5%85%83-Linux%E4%B8%8E%E8%BF%90%E7%BB%B4%E8%84%9A%E6%9C%AC%E5%B7%A5%E7%A8%8B.html" ><span>03</span>Linux 与运维脚本</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E5%9B%9B%E5%8D%95%E5%85%83-%E7%B1%BB%E7%BB%A7%E6%89%BF%E4%B8%8E%E6%A8%A1%E5%9D%97%E7%BB%84%E7%BB%87.html" ><span>04</span>类、继承与模块</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%BA%94%E5%8D%95%E5%85%83-%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E4%B8%8EHTTP%E6%8E%A5%E5%8F%A3.html" ><span>05</span>网络编程与 HTTP</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E5%85%AD%E5%8D%95%E5%85%83-%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%8E%E8%B5%84%E4%BA%A7%E7%AE%A1%E7%90%86%E5%90%8E%E7%AB%AF.html" ><span>06</span>数据库与资产 API</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%B8%83%E5%8D%95%E5%85%83-%E5%89%8D%E7%AB%AF%E4%B8%8ENode%E4%BA%A4%E4%BA%92.html" ><span>07</span>前端与 Node 交互</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E5%85%AB%E5%8D%95%E5%85%83-%E8%BF%90%E7%BB%B4%E4%BB%BB%E5%8A%A1%E9%98%9F%E5%88%97%E4%B8%8E%E6%89%A7%E8%A1%8C.html" ><span>08</span>任务队列与执行</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%B9%9D%E5%8D%95%E5%85%83-%E7%99%BB%E5%BD%95%E6%9D%83%E9%99%90%E4%B8%8E%E9%83%A8%E7%BD%B2.html" ><span>09</span>登录权限与部署</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E5%8D%81%E5%8D%95%E5%85%83-%E7%BB%BC%E5%90%88%E5%AE%9E%E6%88%98%E4%B8%8E%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91.html" ><span>10</span>综合实战与独立开发</a></nav><p class="nav-label">动手与查阅</p><nav class="extras" aria-label="参考资料"><a href="../../../../projects.html">实战项目与源码 <span>05</span></a><a href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%B9%9D%E5%8D%95%E5%85%83%E8%A1%A5%E5%85%85-%E9%83%A8%E7%BD%B2%E5%A4%87%E4%BB%BD%E4%B8%8E%E6%81%A2%E5%A4%8D.html">部署、备份与恢复</a><a href="../../../../%E4%B8%8B%E8%BD%BD%E8%B5%84%E6%96%99/index.html">作者资料与练习</a><a href="../../../../notes.html">补充笔记</a></nav><div class="sidebar-footer"><span class="status-dot"></span>循序渐进 · 动手验证</div></aside>
+<div class="page"><header class="topbar"><button class="menu-toggle" aria-label="展开目录" aria-controls="sidebar" aria-expanded="false">☰</button><div class="breadcrumb">学习手册 <span>/</span> 实战项目</div><button class="search-trigger" aria-label="搜索课程"><span>⌕</span> 搜索课程、概念或代码 <kbd>/</kbd></button></header><main id="main" class="reader"><article class="prose"><p class="eyebrow">PROJECT SOURCE</p><h1>jobs.py</h1><p class="source-path">系统学习/项目/05-资产API/jobs.py</p><p>配套学习源码，可下载后在本机运行。</p><p><a class="button primary" href="../../../../downloads/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E9%A1%B9%E7%9B%AE/05-%E8%B5%84%E4%BA%A7API/jobs.py.txt" download="jobs.py">下载原文件 ↓</a> <a class="button secondary" href="../../../../downloads/learning-code.zip">下载完整学习资料 ZIP</a></p><pre><code class="hljs language-python"><span class="hljs-keyword">import</span> ipaddress
+<span class="hljs-keyword">import</span> json
+<span class="hljs-keyword">import</span> os
+<span class="hljs-keyword">import</span> sqlite3
+<span class="hljs-keyword">import</span> subprocess
+<span class="hljs-keyword">import</span> sys
+<span class="hljs-keyword">import</span> threading
+<span class="hljs-keyword">from</span> pathlib <span class="hljs-keyword">import</span> Path
+<span class="hljs-keyword">from</span> storage <span class="hljs-keyword">import</span> DomainError
+
+
+TASKS = {<span class="hljs-string">&quot;disk_usage&quot;</span>: <span class="hljs-string">&quot;平台本机磁盘容量&quot;</span>, <span class="hljs-string">&quot;tcp_connect&quot;</span>: <span class="hljs-string">&quot;资产 IPv4 TCP 端口连接&quot;</span>}
+
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">run_command</span>(<span class="hljs-params">command, timeout</span>):
+    <span class="hljs-keyword">try</span>:
+        result = subprocess.run(command, capture_output=<span class="hljs-literal">True</span>, text=<span class="hljs-literal">True</span>, encoding=<span class="hljs-string">&quot;utf-8&quot;</span>, timeout=timeout, shell=<span class="hljs-literal">False</span>)
+    <span class="hljs-keyword">except</span> subprocess.TimeoutExpired:
+        <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;timed_out&quot;</span>, {<span class="hljs-string">&quot;error&quot;</span>: <span class="hljs-string">&quot;执行超过时限，子进程已终止&quot;</span>}
+    <span class="hljs-keyword">except</span> OSError:
+        <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;failed&quot;</span>, {<span class="hljs-string">&quot;error&quot;</span>: <span class="hljs-string">&quot;无法启动检查进程&quot;</span>}
+    <span class="hljs-keyword">try</span>:
+        output = json.loads(result.stdout)
+    <span class="hljs-keyword">except</span> ValueError:
+        <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;failed&quot;</span>, {<span class="hljs-string">&quot;error&quot;</span>: <span class="hljs-string">&quot;检查进程未返回有效 JSON&quot;</span>}
+    <span class="hljs-keyword">if</span> result.returncode != <span class="hljs-number">0</span>:
+        <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;failed&quot;</span>, output
+    <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;succeeded&quot;</span>, output
+
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">execute_job</span>(<span class="hljs-params">job</span>):
+    command = [sys.executable, <span class="hljs-string">&quot;-X&quot;</span>, <span class="hljs-string">&quot;utf8&quot;</span>, <span class="hljs-built_in">str</span>(Path(__file__).with_name(<span class="hljs-string">&quot;task_worker.py&quot;</span>)), job[<span class="hljs-string">&quot;task&quot;</span>], job[<span class="hljs-string">&quot;input_json&quot;</span>]]
+    <span class="hljs-keyword">return</span> run_command(command, <span class="hljs-number">3</span>)
+
+
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">JobEngine</span>:
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, store, workers=<span class="hljs-number">2</span>, capacity=<span class="hljs-number">20</span>, executor=execute_job</span>):
+        <span class="hljs-variable language_">self</span>.store = store
+        <span class="hljs-variable language_">self</span>.capacity = capacity
+        <span class="hljs-variable language_">self</span>.executor = executor
+        <span class="hljs-variable language_">self</span>.stop_event = threading.Event()
+        <span class="hljs-variable language_">self</span>.threads = []
+        <span class="hljs-variable language_">self</span>.lock_file = <span class="hljs-built_in">open</span>(<span class="hljs-built_in">str</span>(Path(store.path).resolve()) + <span class="hljs-string">&quot;.worker.lock&quot;</span>, <span class="hljs-string">&quot;a+b&quot;</span>)
+        <span class="hljs-keyword">try</span>:
+            <span class="hljs-variable language_">self</span>.lock_file.seek(<span class="hljs-number">0</span>, os.SEEK_END)
+            <span class="hljs-keyword">if</span> <span class="hljs-variable language_">self</span>.lock_file.tell() == <span class="hljs-number">0</span>:
+                <span class="hljs-variable language_">self</span>.lock_file.write(<span class="hljs-string">b&quot;0&quot;</span>)
+                <span class="hljs-variable language_">self</span>.lock_file.flush()
+            <span class="hljs-variable language_">self</span>.lock_file.seek(<span class="hljs-number">0</span>)
+            <span class="hljs-keyword">if</span> os.name == <span class="hljs-string">&quot;nt&quot;</span>:
+                <span class="hljs-keyword">import</span> msvcrt
+                msvcrt.locking(<span class="hljs-variable language_">self</span>.lock_file.fileno(), msvcrt.LK_NBLCK, <span class="hljs-number">1</span>)
+            <span class="hljs-keyword">else</span>:
+                <span class="hljs-keyword">import</span> fcntl
+                fcntl.flock(<span class="hljs-variable language_">self</span>.lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            <span class="hljs-variable language_">self</span>.initialize()
+            <span class="hljs-keyword">for</span> number <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(workers):
+                thread = threading.Thread(target=<span class="hljs-variable language_">self</span>.work, name=<span class="hljs-string">&quot;ops-worker-&quot;</span> + <span class="hljs-built_in">str</span>(number))
+                thread.start()
+                <span class="hljs-variable language_">self</span>.threads.append(thread)
+        <span class="hljs-keyword">except</span> Exception:
+            <span class="hljs-variable language_">self</span>.close()
+            <span class="hljs-keyword">raise</span>
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">initialize</span>(<span class="hljs-params">self</span>):
+        connection = <span class="hljs-variable language_">self</span>.store.connect()
+        <span class="hljs-keyword">try</span>:
+            connection.executescript(<span class="hljs-string">&quot;&quot;&quot;
+                CREATE TABLE IF NOT EXISTS jobs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    task TEXT NOT NULL,
+                    input_json TEXT NOT NULL,
+                    state TEXT NOT NULL CHECK(state IN (&#x27;queued&#x27;,&#x27;running&#x27;,&#x27;succeeded&#x27;,&#x27;failed&#x27;,&#x27;timed_out&#x27;)),
+                    result_json TEXT,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    started_at TEXT,
+                    finished_at TEXT
+                );
+                CREATE TABLE IF NOT EXISTS job_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    job_id INTEGER NOT NULL,
+                    state TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS jobs_state_id ON jobs(state, id);
+            &quot;&quot;&quot;</span>)
+            columns = []
+            <span class="hljs-keyword">for</span> column <span class="hljs-keyword">in</span> connection.execute(<span class="hljs-string">&quot;PRAGMA table_info(jobs)&quot;</span>):
+                columns.append(column[<span class="hljs-string">&quot;name&quot;</span>])
+            <span class="hljs-keyword">if</span> <span class="hljs-string">&quot;submitted_by&quot;</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> columns:
+                connection.execute(<span class="hljs-string">&quot;ALTER TABLE jobs ADD COLUMN submitted_by TEXT NOT NULL DEFAULT &#x27;legacy-unknown&#x27;&quot;</span>)
+            connection.execute(<span class="hljs-string">&quot;BEGIN IMMEDIATE&quot;</span>)
+            connection.execute(<span class="hljs-string">&quot;INSERT INTO job_events(job_id,state) SELECT id,&#x27;failed&#x27; FROM jobs WHERE state=&#x27;running&#x27;&quot;</span>)
+            connection.execute(<span class="hljs-string">&quot;UPDATE jobs SET state=&#x27;failed&#x27;, result_json=?, finished_at=CURRENT_TIMESTAMP WHERE state=&#x27;running&#x27;&quot;</span>,
+                               (json.dumps({<span class="hljs-string">&quot;error&quot;</span>: <span class="hljs-string">&quot;服务中断，执行结果未知；未自动重试&quot;</span>}, ensure_ascii=<span class="hljs-literal">False</span>),))
+            connection.commit()
+        <span class="hljs-keyword">except</span> Exception:
+            connection.rollback()
+            <span class="hljs-keyword">raise</span>
+        <span class="hljs-keyword">finally</span>:
+            connection.close()
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">submit</span>(<span class="hljs-params">self, value, actor=<span class="hljs-string">&quot;local-course&quot;</span></span>):
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">isinstance</span>(value, <span class="hljs-built_in">dict</span>) <span class="hljs-keyword">or</span> <span class="hljs-built_in">set</span>(value) != {<span class="hljs-string">&quot;task&quot;</span>, <span class="hljs-string">&quot;asset_id&quot;</span>}:
+            <span class="hljs-keyword">raise</span> DomainError(<span class="hljs-number">400</span>, <span class="hljs-string">&quot;需要 task 与 asset_id&quot;</span>)
+        task = value[<span class="hljs-string">&quot;task&quot;</span>]
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">isinstance</span>(task, <span class="hljs-built_in">str</span>) <span class="hljs-keyword">or</span> task <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> TASKS:
+            <span class="hljs-keyword">raise</span> DomainError(<span class="hljs-number">400</span>, <span class="hljs-string">&quot;任务不在白名单中&quot;</span>)
+        <span class="hljs-keyword">if</span> task == <span class="hljs-string">&quot;disk_usage&quot;</span> <span class="hljs-keyword">and</span> value[<span class="hljs-string">&quot;asset_id&quot;</span>] <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:
+            <span class="hljs-keyword">raise</span> DomainError(<span class="hljs-number">400</span>, <span class="hljs-string">&quot;本机检查的 asset_id 必须为 null&quot;</span>)
+        <span class="hljs-keyword">if</span> task == <span class="hljs-string">&quot;tcp_connect&quot;</span> <span class="hljs-keyword">and</span> (<span class="hljs-built_in">type</span>(value[<span class="hljs-string">&quot;asset_id&quot;</span>]) <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">int</span> <span class="hljs-keyword">or</span> value[<span class="hljs-string">&quot;asset_id&quot;</span>] &lt; <span class="hljs-number">1</span> <span class="hljs-keyword">or</span> value[<span class="hljs-string">&quot;asset_id&quot;</span>] &gt; <span class="hljs-number">10</span> ** <span class="hljs-number">18</span>):
+            <span class="hljs-keyword">raise</span> DomainError(<span class="hljs-number">400</span>, <span class="hljs-string">&quot;请选择有效资产编号&quot;</span>)
+        connection = <span class="hljs-variable language_">self</span>.store.connect()
+        <span class="hljs-keyword">try</span>:
+            connection.execute(<span class="hljs-string">&quot;BEGIN IMMEDIATE&quot;</span>)
+            count = connection.execute(<span class="hljs-string">&quot;SELECT COUNT(*) FROM jobs WHERE state IN (&#x27;queued&#x27;,&#x27;running&#x27;)&quot;</span>).fetchone()[<span class="hljs-number">0</span>]
+            <span class="hljs-keyword">if</span> count &gt;= <span class="hljs-variable language_">self</span>.capacity:
+                <span class="hljs-keyword">raise</span> DomainError(<span class="hljs-number">429</span>, <span class="hljs-string">&quot;等待与运行中的任务已满，请稍后提交&quot;</span>)
+            data = {}
+            <span class="hljs-keyword">if</span> task == <span class="hljs-string">&quot;tcp_connect&quot;</span>:
+                asset = connection.execute(<span class="hljs-string">&quot;SELECT * FROM assets WHERE id=?&quot;</span>, (value[<span class="hljs-string">&quot;asset_id&quot;</span>],)).fetchone()
+                <span class="hljs-keyword">if</span> asset <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:
+                    <span class="hljs-keyword">raise</span> DomainError(<span class="hljs-number">404</span>, <span class="hljs-string">&quot;资产不存在&quot;</span>)
+                <span class="hljs-keyword">try</span>:
+                    host = <span class="hljs-built_in">str</span>(ipaddress.IPv4Address(asset[<span class="hljs-string">&quot;host&quot;</span>]))
+                <span class="hljs-keyword">except</span> ValueError:
+                    <span class="hljs-keyword">raise</span> DomainError(<span class="hljs-number">400</span>, <span class="hljs-string">&quot;本单元 TCP 检查只接受 IPv4 地址，不做域名解析&quot;</span>)
+                data = {<span class="hljs-string">&quot;asset_id&quot;</span>: asset[<span class="hljs-string">&quot;id&quot;</span>], <span class="hljs-string">&quot;name&quot;</span>: asset[<span class="hljs-string">&quot;name&quot;</span>], <span class="hljs-string">&quot;host&quot;</span>: host, <span class="hljs-string">&quot;port&quot;</span>: asset[<span class="hljs-string">&quot;port&quot;</span>]}
+            cursor = connection.execute(<span class="hljs-string">&quot;INSERT INTO jobs(task,input_json,state,submitted_by) VALUES(?,?,&#x27;queued&#x27;,?)&quot;</span>, (task, json.dumps(data, ensure_ascii=<span class="hljs-literal">False</span>), actor))
+            job_id = cursor.lastrowid
+            connection.execute(<span class="hljs-string">&quot;INSERT INTO job_events(job_id,state) VALUES(?,&#x27;queued&#x27;)&quot;</span>, (job_id,))
+            connection.commit()
+            <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.get(job_id)
+        <span class="hljs-keyword">except</span> Exception:
+            connection.rollback()
+            <span class="hljs-keyword">raise</span>
+        <span class="hljs-keyword">finally</span>:
+            connection.close()
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">get</span>(<span class="hljs-params">self, job_id</span>):
+        connection = <span class="hljs-variable language_">self</span>.store.connect()
+        <span class="hljs-keyword">try</span>:
+            connection.execute(<span class="hljs-string">&quot;BEGIN&quot;</span>)
+            row = connection.execute(<span class="hljs-string">&quot;SELECT * FROM jobs WHERE id=?&quot;</span>, (job_id,)).fetchone()
+            <span class="hljs-keyword">if</span> row <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:
+                <span class="hljs-keyword">raise</span> DomainError(<span class="hljs-number">404</span>, <span class="hljs-string">&quot;任务不存在&quot;</span>)
+            result = <span class="hljs-built_in">dict</span>(row)
+            result[<span class="hljs-string">&quot;input&quot;</span>] = json.loads(result.pop(<span class="hljs-string">&quot;input_json&quot;</span>))
+            raw = result.pop(<span class="hljs-string">&quot;result_json&quot;</span>)
+            result[<span class="hljs-string">&quot;result&quot;</span>] = <span class="hljs-literal">None</span>
+            <span class="hljs-keyword">if</span> raw <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:
+                result[<span class="hljs-string">&quot;result&quot;</span>] = json.loads(raw)
+            result[<span class="hljs-string">&quot;events&quot;</span>] = []
+            <span class="hljs-keyword">for</span> event <span class="hljs-keyword">in</span> connection.execute(<span class="hljs-string">&quot;SELECT state,created_at FROM job_events WHERE job_id=? ORDER BY id&quot;</span>, (job_id,)):
+                result[<span class="hljs-string">&quot;events&quot;</span>].append(<span class="hljs-built_in">dict</span>(event))
+            connection.commit()
+            <span class="hljs-keyword">return</span> result
+        <span class="hljs-keyword">finally</span>:
+            connection.close()
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">recent</span>(<span class="hljs-params">self</span>):
+        connection = <span class="hljs-variable language_">self</span>.store.connect()
+        <span class="hljs-keyword">try</span>:
+            items = []
+            <span class="hljs-keyword">for</span> row <span class="hljs-keyword">in</span> connection.execute(<span class="hljs-string">&quot;SELECT id,task,state,created_at FROM jobs ORDER BY id DESC LIMIT 20&quot;</span>):
+                items.append(<span class="hljs-built_in">dict</span>(row))
+            <span class="hljs-keyword">return</span> {<span class="hljs-string">&quot;items&quot;</span>: items}
+        <span class="hljs-keyword">finally</span>:
+            connection.close()
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">claim</span>(<span class="hljs-params">self</span>):
+        connection = <span class="hljs-variable language_">self</span>.store.connect()
+        <span class="hljs-keyword">try</span>:
+            connection.execute(<span class="hljs-string">&quot;BEGIN IMMEDIATE&quot;</span>)
+            row = connection.execute(<span class="hljs-string">&quot;SELECT * FROM jobs WHERE state=&#x27;queued&#x27; ORDER BY id LIMIT 1&quot;</span>).fetchone()
+            <span class="hljs-keyword">if</span> row <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:
+                connection.commit()
+                <span class="hljs-keyword">return</span> <span class="hljs-literal">None</span>
+            connection.execute(<span class="hljs-string">&quot;UPDATE jobs SET state=&#x27;running&#x27;, started_at=CURRENT_TIMESTAMP WHERE id=?&quot;</span>, (row[<span class="hljs-string">&quot;id&quot;</span>],))
+            connection.execute(<span class="hljs-string">&quot;INSERT INTO job_events(job_id,state) VALUES(?,&#x27;running&#x27;)&quot;</span>, (row[<span class="hljs-string">&quot;id&quot;</span>],))
+            connection.commit()
+            <span class="hljs-keyword">return</span> <span class="hljs-built_in">dict</span>(row)
+        <span class="hljs-keyword">except</span> Exception:
+            connection.rollback()
+            <span class="hljs-keyword">raise</span>
+        <span class="hljs-keyword">finally</span>:
+            connection.close()
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">finish</span>(<span class="hljs-params">self, job_id, state, result</span>):
+        <span class="hljs-keyword">if</span> state <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> [<span class="hljs-string">&quot;succeeded&quot;</span>, <span class="hljs-string">&quot;failed&quot;</span>, <span class="hljs-string">&quot;timed_out&quot;</span>]:
+            <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">&quot;未知结束状态&quot;</span>)
+        connection = <span class="hljs-variable language_">self</span>.store.connect()
+        <span class="hljs-keyword">try</span>:
+            connection.execute(<span class="hljs-string">&quot;BEGIN IMMEDIATE&quot;</span>)
+            cursor = connection.execute(<span class="hljs-string">&quot;UPDATE jobs SET state=?,result_json=?,finished_at=CURRENT_TIMESTAMP WHERE id=? AND state=&#x27;running&#x27;&quot;</span>,
+                                        (state, json.dumps(result, ensure_ascii=<span class="hljs-literal">False</span>), job_id))
+            <span class="hljs-keyword">if</span> cursor.rowcount != <span class="hljs-number">1</span>:
+                <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">&quot;任务不是运行状态&quot;</span>)
+            connection.execute(<span class="hljs-string">&quot;INSERT INTO job_events(job_id,state) VALUES(?,?)&quot;</span>, (job_id, state))
+            connection.commit()
+        <span class="hljs-keyword">except</span> Exception:
+            connection.rollback()
+            <span class="hljs-keyword">raise</span>
+        <span class="hljs-keyword">finally</span>:
+            connection.close()
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">work</span>(<span class="hljs-params">self</span>):
+        <span class="hljs-keyword">while</span> <span class="hljs-keyword">not</span> <span class="hljs-variable language_">self</span>.stop_event.is_set():
+            <span class="hljs-keyword">try</span>:
+                job = <span class="hljs-variable language_">self</span>.claim()
+                <span class="hljs-keyword">if</span> job <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:
+                    <span class="hljs-keyword">try</span>:
+                        state, result = <span class="hljs-variable language_">self</span>.executor(job)
+                    <span class="hljs-keyword">except</span> Exception:
+                        state, result = <span class="hljs-string">&quot;failed&quot;</span>, {<span class="hljs-string">&quot;error&quot;</span>: <span class="hljs-string">&quot;检查执行器发生异常&quot;</span>}
+                    <span class="hljs-variable language_">self</span>.finish(job[<span class="hljs-string">&quot;id&quot;</span>], state, result)
+                    <span class="hljs-keyword">continue</span>
+            <span class="hljs-keyword">except</span> sqlite3.Error <span class="hljs-keyword">as</span> error:
+                <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;任务数据库错误：&quot;</span> + <span class="hljs-built_in">type</span>(error).__name__, file=sys.stderr)
+            <span class="hljs-variable language_">self</span>.stop_event.wait(<span class="hljs-number">0.2</span>)
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">close</span>(<span class="hljs-params">self</span>):
+        <span class="hljs-variable language_">self</span>.stop_event.<span class="hljs-built_in">set</span>()
+        <span class="hljs-keyword">for</span> thread <span class="hljs-keyword">in</span> <span class="hljs-variable language_">self</span>.threads:
+            thread.join()
+        <span class="hljs-variable language_">self</span>.lock_file.close()
+</code></pre></article><footer class="page-footer"><span>运维编程手册</span><span>读概念 → 预测输出 → 动手运行 → 独立练习</span></footer></main></div>
+<dialog class="search-dialog"><form method="dialog" class="search-head"><label class="visually-hidden" for="search-input">搜索课程</label><input id="search-input" type="search" placeholder="搜索课程、概念或代码…" autocomplete="off"><button aria-label="关闭搜索">Esc</button></form><div class="search-results" aria-live="polite"><p>输入关键词，查找课程与配套源码。</p></div></dialog></body></html>

@@ -1,0 +1,131 @@
+"""Linux + Nginx + OpenSSL：临时 CA、临时端口、实际模板代理测试。"""
+import argparse
+import http.client
+import json
+from pathlib import Path
+import secrets
+import socket
+import ssl
+import subprocess
+import tempfile
+import threading
+import time
+from auth import Auth
+from secure_server import create_secure_server
+from storage import Store
+
+
+def run(command):
+    result = subprocess.run(command, capture_output=True, text=True, timeout=15)
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--nginx", default="nginx")
+    args = parser.parse_args()
+    directory = tempfile.TemporaryDirectory(prefix="ops-course-tls-")
+    root = Path(directory.name)
+    probe = socket.socket()
+    probe.bind(("127.0.0.1", 0))
+    port = probe.getsockname()[1]
+    probe.close()
+    origin = "https://localhost:" + str(port)
+    auth = Auth(Store(root / "platform.sqlite3"))
+    password = secrets.token_urlsafe(24)
+    auth.set_user("tls_admin", password, "admin")
+    backend = create_secure_server(("127.0.0.1", 0), root / "platform.sqlite3", origin)
+    thread = threading.Thread(target=backend.serve_forever)
+    thread.start()
+    proxy = None
+    try:
+        run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1", "-subj", "/CN=OpsCourseLabCA", "-addext", "basicConstraints=critical,CA:TRUE", "-addext", "keyUsage=critical,keyCertSign,cRLSign", "-keyout", str(root / "ca.key"), "-out", str(root / "ca.pem")])
+        run(["openssl", "req", "-new", "-newkey", "rsa:2048", "-nodes", "-subj", "/CN=localhost", "-keyout", str(root / "server.key"), "-out", str(root / "server.csr")])
+        (root / "leaf.ext").write_text("basicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth\nsubjectAltName=DNS:localhost\nauthorityKeyIdentifier=keyid,issuer\n", encoding="utf-8")
+        run(["openssl", "x509", "-req", "-in", str(root / "server.csr"), "-CA", str(root / "ca.pem"), "-CAkey", str(root / "ca.key"), "-CAcreateserial", "-days", "1", "-extfile", str(root / "leaf.ext"), "-out", str(root / "server.pem")])
+        template = (Path(__file__).parent / "deploy" / "nginx.conf.example").read_text(encoding="utf-8")
+        template = template.replace("listen 443 ssl;", "listen 127.0.0.1:" + str(port) + " ssl;")
+        template = template.replace("ops.example.test", "localhost")
+        template = template.replace("proxy_set_header Host localhost;", "proxy_set_header Host localhost:" + str(port) + ";")
+        template = template.replace("127.0.0.1:8096", "127.0.0.1:" + str(backend.server_port))
+        template = template.replace("/etc/ops-course/tls/fullchain.pem", str(root / "server.pem"))
+        template = template.replace("/etc/ops-course/tls/privkey.pem", str(root / "server.key"))
+        template = "fastcgi_temp_path " + str(root / "fastcgi") + ";\nuwsgi_temp_path " + str(root / "uwsgi") + ";\nscgi_temp_path " + str(root / "scgi") + ";\n" + template
+        config = "daemon off;\nmaster_process off;\npid " + str(root / "nginx.pid") + ";\nerror_log " + str(root / "error.log") + " notice;\nevents {}\nhttp {\naccess_log " + str(root / "access.log") + ";\nclient_body_temp_path " + str(root / "body") + ";\nproxy_temp_path " + str(root / "proxy") + ";\n" + template + "\n}\n"
+        (root / "nginx.conf").write_text(config, encoding="utf-8")
+        command = [args.nginx, "-p", str(root) + "/", "-c", str(root / "nginx.conf"), "-e", str(root / "error.log")]
+        run(command + ["-t"])
+        proxy = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        trusted = ssl.create_default_context(cafile=str(root / "ca.pem"))
+
+        def request(method, path, value=None, cookie="", csrf="", request_origin=origin, context=trusted, host="localhost"):
+            client = http.client.HTTPSConnection(host, port, context=context, timeout=4)
+            headers = {"Origin": request_origin, "Content-Type": "application/json", "X-Requested-With": "ops-course", "Cookie": cookie, "X-CSRF-Token": csrf}
+            body = None
+            if value is not None:
+                body = json.dumps(value).encode("utf-8")
+            try:
+                client.request(method, path, body, headers)
+                response = client.getresponse()
+                return response.status, response.read(), response.getheader("Set-Cookie")
+            finally:
+                client.close()
+
+        deadline = time.monotonic() + 8
+        while True:
+            try:
+                assert request("GET", "/api/health")[0] == 200
+                break
+            except ConnectionRefusedError:
+                if time.monotonic() > deadline:
+                    raise
+                time.sleep(0.1)
+        for context, host in [(ssl.create_default_context(), "localhost"), (trusted, "127.0.0.1")]:
+            try:
+                request("GET", "/api/health", context=context, host=host)
+            except ssl.SSLCertVerificationError:
+                pass
+            else:
+                raise AssertionError("不可信 CA 或错误主机名必须失败")
+        status, body, cookie = request("POST", "/api/login", {"username": "tls_admin", "password": password})
+        assert status == 200 and "Secure" in cookie and "HttpOnly" in cookie and "SameSite=Strict" in cookie
+        csrf = json.loads(body)["csrf"]
+        cookie = cookie.split(";")[0]
+        asset = {"name": "tls-asset", "host": "127.0.0.1", "port": 80, "environment": "test"}
+        assert request("POST", "/api/assets", asset, cookie, csrf, "https://wrong.invalid")[0] == 403
+        assert request("POST", "/api/assets", asset, cookie)[0] == 403
+        assert request("POST", "/api/assets", asset, cookie, csrf)[0] == 201
+        status, body, unused = request("POST", "/api/jobs", {"task": "disk_usage", "asset_id": None}, cookie, csrf)
+        assert status == 202
+        job_id = json.loads(body)["id"]
+        deadline = time.monotonic() + 10
+        while True:
+            status, body, unused = request("GET", "/api/jobs/" + str(job_id), cookie=cookie)
+            job = json.loads(body)
+            if job["state"] not in ["queued", "running"]:
+                assert job["state"] == "succeeded"
+                break
+            assert time.monotonic() < deadline
+            time.sleep(0.1)
+        assert request("POST", "/api/assets", {"data": "x" * 9000}, cookie, csrf)[0] == 413
+        statuses = []
+        for number in range(6):
+            statuses.append(request("POST", "/api/login", {"username": "unknown", "password": "wrong"})[0])
+        assert 429 in statuses
+        assert "limiting requests" in (root / "error.log").read_text(encoding="utf-8")
+        assert request("POST", "/api/logout", {}, cookie, csrf)[0] == 200
+        assert request("GET", "/api/assets", cookie=cookie)[0] == 401
+        print("PASS: real Nginx template, trusted TLS, wrong CA/hostname rejection, Secure cookie, login/assets/jobs/logout, Origin/CSRF, body limit, proxy login rate limit")
+    finally:
+        if proxy is not None:
+            proxy.terminate()
+            proxy.communicate(timeout=8)
+        backend.shutdown()
+        backend.server_close()
+        thread.join()
+        directory.cleanup()
+
+
+if __name__ == "__main__":
+    main()

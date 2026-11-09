@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>登录 · 运维工作台</title><link rel="stylesheet" href="/style.css"><script src="/login.js" defer></script></head>
+<body><main><p class="eyebrow">运维编程课程 / 09</p><h1>登录运维工作台</h1><p>使用管理员在本机创建的账户登录。没有公开注册入口。</p>
+<section><form id="login-form"><label for="username">用户名</label><input id="username" required maxlength="40" autocomplete="username"><label for="password">密码</label><input id="password" type="password" required maxlength="128" autocomplete="current-password"><div class="actions"><button id="login-button" type="submit">登录</button></div></form><p id="login-message" role="status" aria-live="polite">登录后按角色开放操作。</p></section></main></body>
+</html>

@@ -1,0 +1,119 @@
+import sqlite3
+
+
+class DomainError(Exception):
+    def __init__(self, status, message):
+        Exception.__init__(self, message)
+        self.status = status
+
+
+def validate_asset(value):
+    if not isinstance(value, dict) or set(value) != {"name", "host", "port", "environment"}:
+        raise DomainError(400, "需要 name、host、port、environment 四个字段")
+    data = {}
+    for key, maximum in [("name", 80), ("host", 253), ("environment", 20)]:
+        item = value[key]
+        if not isinstance(item, str) or not item.strip() or len(item.strip()) > maximum:
+            raise DomainError(400, key + " 必须为长度合适的非空文本")
+        data[key] = item.strip()
+        for character in data[key]:
+            if ord(character) < 32:
+                raise DomainError(400, "文本不能包含控制字符")
+    port = value["port"]
+    if type(port) is not int or port < 1 or port > 65535:
+        raise DomainError(400, "port 必须是 1 到 65535 的整数")
+    if data["environment"] not in ["dev", "test", "prod"]:
+        raise DomainError(400, "environment 必须是 dev、test 或 prod")
+    data["port"] = port
+    return data
+
+
+class Store:
+    def __init__(self, path):
+        self.path = path
+        connection = self.connect()
+        try:
+            connection.executescript("""
+                CREATE TABLE IF NOT EXISTS assets (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL UNIQUE,
+                    host TEXT NOT NULL,
+                    port INTEGER NOT NULL CHECK(port BETWEEN 1 AND 65535),
+                    environment TEXT NOT NULL CHECK(environment IN ('dev','test','prod'))
+                );
+                CREATE TABLE IF NOT EXISTS audit (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    action TEXT NOT NULL,
+                    asset_id INTEGER NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+            columns = []
+            for column in connection.execute("PRAGMA table_info(audit)"):
+                columns.append(column["name"])
+            if "actor" not in columns:
+                connection.execute("ALTER TABLE audit ADD COLUMN actor TEXT NOT NULL DEFAULT 'legacy-unknown'")
+        finally:
+            connection.close()
+
+    def connect(self):
+        connection = sqlite3.connect(self.path, timeout=2, isolation_level=None)
+        connection.row_factory = sqlite3.Row
+        return connection
+
+    def list_assets(self, limit, offset):
+        connection = self.connect()
+        try:
+            connection.execute("BEGIN")
+            total = connection.execute("SELECT COUNT(*) FROM assets").fetchone()[0]
+            rows = connection.execute("SELECT * FROM assets ORDER BY id LIMIT ? OFFSET ?", (limit, offset)).fetchall()
+            items = []
+            for row in rows:
+                items.append(dict(row))
+            connection.commit()
+            return {"items": items, "total": total, "limit": limit, "offset": offset}
+        finally:
+            connection.close()
+
+    def get_asset(self, asset_id):
+        connection = self.connect()
+        try:
+            row = connection.execute("SELECT * FROM assets WHERE id = ?", (asset_id,)).fetchone()
+            if row is None:
+                raise DomainError(404, "资产不存在")
+            return dict(row)
+        finally:
+            connection.close()
+
+    def write(self, action, asset_id=None, value=None, actor="local-course"):
+        if action not in ["create", "update", "delete"]:
+            raise ValueError("Unknown action")
+        data = None
+        if action != "delete":
+            data = validate_asset(value)
+        connection = self.connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            if action == "create":
+                cursor = connection.execute("INSERT INTO assets(name,host,port,environment) VALUES(?,?,?,?)",
+                                            (data["name"], data["host"], data["port"], data["environment"]))
+                asset_id = cursor.lastrowid
+            else:
+                if connection.execute("SELECT id FROM assets WHERE id=?", (asset_id,)).fetchone() is None:
+                    raise DomainError(404, "资产不存在")
+                if action == "update":
+                    connection.execute("UPDATE assets SET name=?,host=?,port=?,environment=? WHERE id=?",
+                                       (data["name"], data["host"], data["port"], data["environment"], asset_id))
+                else:
+                    connection.execute("DELETE FROM assets WHERE id=?", (asset_id,))
+            connection.execute("INSERT INTO audit(action,asset_id,actor) VALUES(?,?,?)", (action, asset_id, actor))
+            result = {"deleted": asset_id}
+            if action != "delete":
+                result = dict(connection.execute("SELECT * FROM assets WHERE id=?", (asset_id,)).fetchone())
+            connection.commit()
+            return result
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()

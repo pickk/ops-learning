@@ -1,0 +1,66 @@
+"""Run isolated CLI checks without changing the machine configuration."""
+import json
+import os
+import pathlib
+import subprocess
+import sys
+import tempfile
+
+
+def call(arguments, environment=None):
+    script = pathlib.Path(__file__).resolve().parent / "inspect_host.py"
+    return subprocess.run([sys.executable, str(script)] + arguments,
+                          capture_output=True, text=True, timeout=10, env=environment)
+
+
+def main():
+    temporary = tempfile.TemporaryDirectory()
+    root = pathlib.Path(temporary.name)
+    config = root / "config.json"
+    source = root / "source.txt"
+    output = root / "report.json"
+    try:
+        source.write_text("now INFO ERROR_in_message\nnow ERROR failed\n", encoding="utf-8")
+        data = {"disk_path": ".", "log_path": "source.txt", "disk_warning_percent": 0}
+        config.write_text(json.dumps(data), encoding="utf-8")
+        arguments = ["--config", str(config), "--output", str(output)]
+        result = call(arguments)
+        assert result.returncode == 1
+        report = json.loads(output.read_text(encoding="utf-8"))
+        assert report["log"] == {"lines": 2, "error_lines": 1}
+        assert report["disk"]["alert"] is True
+        assert 0 <= report["disk"]["used_percent"] <= 100
+        assert json.loads(result.stdout) == report
+        assert "INFO" in result.stderr
+        assert call(arguments).returncode == 1
+        assert json.loads(output.read_text())["log"]["lines"] == 2
+        output.write_text("keep", encoding="utf-8")
+        assert call(arguments + ["--dry-run"]).returncode == 1
+        assert output.read_text() == "keep"
+        assert call(["--config", str(config), "--output", str(source)]).returncode == 2
+        assert call(["--config", str(config), "--output", str(config)]).returncode == 2
+        link = root / "hardlink.txt"
+        os.link(source, link)
+        assert call(["--config", str(config), "--output", str(link)]).returncode == 2
+        assert call(["--config", str(config), "--output", str(root / 'missing' / 'r.json')]).returncode == 2
+        environment = os.environ.copy()
+        environment["OPS_CONFIG"] = str(config)
+        assert call(["--dry-run"], environment).returncode == 1
+        environment["OPS_CONFIG"] = str(root / "missing.json")
+        assert call(["--config", str(config)], environment).returncode == 1
+        for threshold in [True, -1, 101, "80", float("nan")]:
+            data["disk_warning_percent"] = threshold
+            config.write_text(json.dumps(data), encoding="utf-8")
+            assert call(arguments).returncode == 2
+            assert output.read_text() == "keep"
+        assert call(["--config", str(root / "absent.json")]).returncode == 2
+        config.write_text("{invalid", encoding="utf-8")
+        assert call(arguments).returncode == 2
+        assert list(root.glob('.report-*')) == []
+        print("PASS: disk/log report, repeat run, dry-run, input protection, hardlink, invalid output, config priority, malformed inputs")
+    finally:
+        temporary.cleanup()
+
+
+if __name__ == "__main__":
+    main()

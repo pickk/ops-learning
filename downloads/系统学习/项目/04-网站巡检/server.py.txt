@@ -1,0 +1,118 @@
+import argparse
+import json
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlsplit
+from checker import run_checks
+
+
+class Handler(BaseHTTPRequestHandler):
+    def setup(self):
+        BaseHTTPRequestHandler.setup(self)
+        self.connection.settimeout(5)
+
+    def log_message(self, message, *args):
+        pass
+
+    def reply(self, status, value):
+        body = json.dumps(value, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self):
+        path = urlsplit(self.path).path
+        if path == "/api/health":
+            self.reply(200, {"status": "ok"})
+        elif path == "/api/results":
+            self.server.result_lock.acquire()
+            try:
+                results = list(self.server.results)
+            finally:
+                self.server.result_lock.release()
+            self.reply(200, {"results": results})
+        else:
+            self.reply(404, {"error": "接口不存在"})
+
+    def do_POST(self):
+        if urlsplit(self.path).path != "/api/checks":
+            self.reply(404, {"error": "接口不存在"})
+            return
+        if self.headers.get("Content-Type", "").split(";")[0].strip() != "application/json":
+            self.reply(415, {"error": "需要 application/json"})
+            return
+        if self.headers.get("Transfer-Encoding"):
+            self.reply(400, {"error": "教学接口不接收分块请求体"})
+            return
+        lengths = self.headers.get_all("Content-Length", [])
+        try:
+            if len(lengths) != 1:
+                raise ValueError("需要单个 Content-Length")
+            length = int(lengths[0])
+            if length <= 0 or length > 4096:
+                self.reply(413, {"error": "请求体必须为 1 到 4096 字节"})
+                return
+            raw = self.rfile.read(length)
+            if len(raw) != length:
+                raise ValueError("请求体不完整")
+            value = json.loads(raw.decode("utf-8"))
+            if not isinstance(value, dict) or set(value) != {"ids"}:
+                raise ValueError("仅接受 ids 字段")
+            ids = value["ids"]
+            if not isinstance(ids, list) or len(ids) < 1 or len(ids) > 5:
+                raise ValueError("ids 必须包含 1 到 5 个目标")
+            seen = set()
+            for target_id in ids:
+                if not isinstance(target_id, str) or target_id not in self.server.targets:
+                    raise ValueError("目标未在配置中定义")
+                if target_id in seen:
+                    raise ValueError("目标不能重复")
+                seen.add(target_id)
+        except (ValueError, UnicodeError, OSError) as error:
+            self.reply(400, {"error": str(error)})
+            return
+        if not self.server.check_lock.acquire(blocking=False):
+            self.reply(409, {"error": "已有巡检运行，请稍后再试"})
+            return
+        try:
+            results = run_checks(self.server.targets, ids, self.server.check_timeout)
+            self.server.result_lock.acquire()
+            try:
+                self.server.results = results
+            finally:
+                self.server.result_lock.release()
+            self.reply(200, {"results": results})
+        finally:
+            self.server.check_lock.release()
+
+
+def create_server(address, targets, timeout=3):
+    server = ThreadingHTTPServer(address, Handler)
+    server.targets = dict(targets)
+    server.results = []
+    server.result_lock = threading.Lock()
+    server.check_lock = threading.Lock()
+    server.check_timeout = timeout
+    return server
+
+
+def main():
+    parser = argparse.ArgumentParser(description="本地巡检教学 API")
+    parser.add_argument("--port", type=int, default=8094)
+    args = parser.parse_args()
+    targets = {"self": "http://127.0.0.1:" + str(args.port) + "/api/health"}
+    server = create_server(("127.0.0.1", args.port), targets)
+    print("API: http://127.0.0.1:" + str(args.port), flush=True)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+
+
+if __name__ == "__main__":
+    main()

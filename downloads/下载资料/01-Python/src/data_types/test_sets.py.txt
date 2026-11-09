@@ -1,0 +1,27 @@
+# Selected and shortened from Oleksii Trekhleb / learn-python.
+# MIT license: ../../LICENSE. Modified 2026-11-08; see download manifest.
+def test_set_methods():
+    """Set methods"""
+
+    fruits_set = {"apple", "banana", "cherry"}
+
+    # You may check if the item is in set by using "in" statement
+    assert "apple" in fruits_set
+    assert "pineapple" not in fruits_set
+
+    # Use the len() method to return the number of items.
+    assert len(fruits_set) == 3
+
+    # You can use the add() object method to add an item.
+    fruits_set.add("pineapple")
+    assert "pineapple" in fruits_set
+    assert len(fruits_set) == 4
+
+    # Use remove() method to remove an item.
+    fruits_set.remove("pineapple")
+    assert "pineapple" not in fruits_set
+    assert len(fruits_set) == 3
+
+if __name__ == "__main__":
+    test_set_methods()
+    print("PASS")

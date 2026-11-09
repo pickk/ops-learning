@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="从 Python 基础到运维平台开发：连续课程、动手练习与可下载的项目源码。"><meta name="theme-color" content="#163a35"><title>第五单元：从网络请求到巡检 API · 运维编程手册</title><link rel="icon" href="../assets/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="../assets/style.css"><link rel="stylesheet" href="../assets/highlight.css"><script defer src="../assets/app.js" data-root="../"></script></head>
+<body><a class="skip" href="#main">跳到正文</a><aside class="sidebar" id="sidebar"><a class="brand" href="../index.html"><span class="brand-icon">&gt;_</span><span>运维编程手册<small>从第一行代码开始</small></span></a><a class="sidebar-home " href="../index.html">⌂ 学习首页</a><p class="nav-label">系统课程 <span>10 单元</span></p><nav aria-label="系统课程"><a class="nav-lesson " href="%E7%AC%AC%E4%B8%80%E5%8D%95%E5%85%83-Python%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80.html" ><span>01</span>Python 编程基础</a><a class="nav-lesson " href="%E7%AC%AC%E4%BA%8C%E5%8D%95%E5%85%83-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E6%96%87%E4%BB%B6%E5%A4%84%E7%90%86.html" ><span>02</span>数据结构与文件处理</a><a class="nav-lesson " href="%E7%AC%AC%E4%B8%89%E5%8D%95%E5%85%83-Linux%E4%B8%8E%E8%BF%90%E7%BB%B4%E8%84%9A%E6%9C%AC%E5%B7%A5%E7%A8%8B.html" ><span>03</span>Linux 与运维脚本</a><a class="nav-lesson " href="%E7%AC%AC%E5%9B%9B%E5%8D%95%E5%85%83-%E7%B1%BB%E7%BB%A7%E6%89%BF%E4%B8%8E%E6%A8%A1%E5%9D%97%E7%BB%84%E7%BB%87.html" ><span>04</span>类、继承与模块</a><a class="nav-lesson active" href="%E7%AC%AC%E4%BA%94%E5%8D%95%E5%85%83-%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E4%B8%8EHTTP%E6%8E%A5%E5%8F%A3.html" aria-current="page"><span>05</span>网络编程与 HTTP</a><a class="nav-lesson " href="%E7%AC%AC%E5%85%AD%E5%8D%95%E5%85%83-%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%8E%E8%B5%84%E4%BA%A7%E7%AE%A1%E7%90%86%E5%90%8E%E7%AB%AF.html" ><span>06</span>数据库与资产 API</a><a class="nav-lesson " href="%E7%AC%AC%E4%B8%83%E5%8D%95%E5%85%83-%E5%89%8D%E7%AB%AF%E4%B8%8ENode%E4%BA%A4%E4%BA%92.html" ><span>07</span>前端与 Node 交互</a><a class="nav-lesson " href="%E7%AC%AC%E5%85%AB%E5%8D%95%E5%85%83-%E8%BF%90%E7%BB%B4%E4%BB%BB%E5%8A%A1%E9%98%9F%E5%88%97%E4%B8%8E%E6%89%A7%E8%A1%8C.html" ><span>08</span>任务队列与执行</a><a class="nav-lesson " href="%E7%AC%AC%E4%B9%9D%E5%8D%95%E5%85%83-%E7%99%BB%E5%BD%95%E6%9D%83%E9%99%90%E4%B8%8E%E9%83%A8%E7%BD%B2.html" ><span>09</span>登录权限与部署</a><a class="nav-lesson " href="%E7%AC%AC%E5%8D%81%E5%8D%95%E5%85%83-%E7%BB%BC%E5%90%88%E5%AE%9E%E6%88%98%E4%B8%8E%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91.html" ><span>10</span>综合实战与独立开发</a></nav><p class="nav-label">动手与查阅</p><nav class="extras" aria-label="参考资料"><a href="../projects.html">实战项目与源码 <span>05</span></a><a href="%E7%AC%AC%E4%B9%9D%E5%8D%95%E5%85%83%E8%A1%A5%E5%85%85-%E9%83%A8%E7%BD%B2%E5%A4%87%E4%BB%BD%E4%B8%8E%E6%81%A2%E5%A4%8D.html">部署、备份与恢复</a><a href="../%E4%B8%8B%E8%BD%BD%E8%B5%84%E6%96%99/index.html">作者资料与练习</a><a href="../notes.html">补充笔记</a></nav><div class="sidebar-footer"><span class="status-dot"></span>循序渐进 · 动手验证</div></aside>
+<div class="page"><header class="topbar"><button class="menu-toggle" aria-label="展开目录" aria-controls="sidebar" aria-expanded="false">☰</button><div class="breadcrumb">学习手册 <span>/</span> 系统课程</div><button class="search-trigger" aria-label="搜索课程"><span>⌕</span> 搜索课程、概念或代码 <kbd>/</kbd></button></header><main id="main" class="reader"><article class="prose"><h1 id="第五单元从网络请求到巡检-api">第五单元：从网络请求到巡检 API</h1>
+<p>日期：2026-11-08</p>
+<h2 id="前置知识与目标">前置知识与目标</h2>
+<p>先完成函数、文件、异常、类和模块。目标是能检查多个网站，并把检查逻辑变成其他程序可调用的 HTTP 接口。项目使用本机服务验证，不依赖公共网站在线状态。</p>
+<h2 id="第-1-课地址端口和名字">第 1 课：地址、端口和名字</h2>
+<p>IP 用于寻址；端口区分一台机器上的网络服务；DNS 将名称解析成地址。<code>http://127.0.0.1:8094/api/health</code> 中，http 是协议，127.0.0.1 是主机，8094 是端口，/api/health 是路径。</p>
+<p>127.0.0.1 表示发请求这台机器自己。在你的电脑访问它不会连接另一台服务器。监听 0.0.0.0 表示接受所有 IPv4 接口上的连接，不是让用户复制这个地址访问。</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> urllib.parse <span class="hljs-keyword">import</span> urlsplit
+
+address = urlsplit(<span class="hljs-string">&quot;http://127.0.0.1:8094/api/health?detail=true&quot;</span>)
+<span class="hljs-built_in">print</span>(address.scheme)
+<span class="hljs-built_in">print</span>(address.hostname)
+<span class="hljs-built_in">print</span>(address.port)
+<span class="hljs-built_in">print</span>(address.path)
+<span class="hljs-built_in">print</span>(address.query)
+</code></pre>
+<p>输出分别为 http、127.0.0.1、8094、/api/health、detail=true。URL 不要简单用冒号 split：协议、端口和 IPv6 地址都可能有冒号。</p>
+<p>练习：把端口改成 8095，说明哪些部分变化。答案：只有 port 变化；能解析 URL 不表示对应服务一定存在。</p>
+<h2 id="第-2-课tcp-和-socket">第 2 课：TCP 和 Socket</h2>
+<p>TCP 提供可靠有序的字节流，Socket 是程序使用网络的接口。TCP 不会告诉你一次应用消息有多少字节：一次 send 不保证对应一次 recv。</p>
+<p>运行已下载并改写的 <a href="../source/%E4%B8%8B%E8%BD%BD%E8%B5%84%E6%96%99/02-%E7%BD%91%E7%BB%9C/python-sockets-tutorial/echo-server.py.html">回声服务端</a> 和 <a href="../source/%E4%B8%8B%E8%BD%BD%E8%B5%84%E6%96%99/02-%E7%BD%91%E7%BB%9C/python-sockets-tutorial/echo-client.py.html">客户端</a>。先启动服务端，再运行客户端。</p>
+<p>服务端顺序：socket 创建端点 → bind 绑定地址 → listen 等待连接 → accept 得到本次连接 → recv 读取 → sendall 回传 → close。</p>
+<p>客户端顺序：socket → connect → sendall → shutdown 结束发送方向 → 循环 recv 直到对端关闭 → close。这里使用关闭发送方向作为消息结束信号；其他协议可能采用固定长度、分隔符或长度前缀。</p>
+<p>练习：解释为什么客户端循环 recv。答案：消息可能分多段到达，不能只读取一次就认定完整。练习只发送少量文本，不用它代替完整文件传输协议。</p>
+<h2 id="第-3-课http-在字节流上定义格式">第 3 课：HTTP 在字节流上定义格式</h2>
+<p>典型请求分为请求行、头、空行、可选消息体：</p>
+<pre><code class="language-http"><span class="hljs-keyword">POST</span> <span class="hljs-string">/api/checks</span> <span class="hljs-meta">HTTP/1.1</span>
+<span class="hljs-attribute">Host</span><span class="hljs-punctuation">: </span>127.0.0.1:8094
+<span class="hljs-attribute">Content-Type</span><span class="hljs-punctuation">: </span>application/json
+<span class="hljs-attribute">Content-Length</span><span class="hljs-punctuation">: </span>17
+
+<span class="language-prolog">{<span class="hljs-string">&quot;ids&quot;</span>: [<span class="hljs-string">&quot;self&quot;</span>]}
+</span></code></pre>
+<p>上面的 JSON 若按展示文字实际编码，其长度应由程序计算，不要手填示意值；本课程客户端交给 http.client 自动填写 Content-Length。HTTP 消息中的换行、编码和长度有严格规则，学习应用接口时使用库来处理。</p>
+<p>GET 读取信息；POST 提交处理请求。状态码表达请求处理结果：200 成功，400 参数错误，404 路径不存在，409 当前状态冲突，413 内容过大，415 内容类型不支持，500 服务端错误。</p>
+<p>接口返回 200 不代表所有受检网站都正常。接口成功返回检查结果，其中某目标可能是 alert 或 error。必须区分外层 API 状态与内层业务状态。</p>
+<p>练习：接口成功检查出一个 404 网站，外层应该是什么？本项目答案：200，内部 http_status=404、status=alert。</p>
+<h2 id="第-4-课用-python-发出请求">第 4 课：用 Python 发出请求</h2>
+<p>先启动项目 <a href="http://server.py" rel="noreferrer">server.py</a>，再运行：</p>
+<pre><code class="language-python"><span class="hljs-keyword">import</span> http.client
+<span class="hljs-keyword">import</span> json
+
+connection = http.client.HTTPConnection(<span class="hljs-string">&quot;127.0.0.1&quot;</span>, <span class="hljs-number">8094</span>, timeout=<span class="hljs-number">3</span>)
+<span class="hljs-keyword">try</span>:
+    connection.request(<span class="hljs-string">&quot;GET&quot;</span>, <span class="hljs-string">&quot;/api/health&quot;</span>)
+    response = connection.getresponse()
+    <span class="hljs-built_in">print</span>(response.status)
+    body = response.read(<span class="hljs-number">4096</span>)
+    data = json.loads(body.decode(<span class="hljs-string">&quot;utf-8&quot;</span>))
+    <span class="hljs-built_in">print</span>(data[<span class="hljs-string">&quot;status&quot;</span>])
+<span class="hljs-keyword">finally</span>:
+    connection.close()
+</code></pre>
+<p>先连接对象配置，再发送，接着接收响应头，最后读取消息体。read 得到 bytes，decode 得到文字，loads 得到 Python 对象。这里读取上限用于小型演示响应，遇到更大的业务消息要明确上限和截断处理。</p>
+<p>网络库返回 404 时不一定抛异常，需检查状态码；无法连接时才可能在 getresponse 之前失败。异常处理不能替代状态检查。</p>
+<p>项目 <a href="http://checker.py" rel="noreferrer">checker.py</a> 只检查响应头是否收到、状态是否为 2xx，不读取完整正文。这样可以演示基础可用性，但不能证明页面内容正确或所有资源正常。</p>
+<h2 id="第-5-课超时https-与重试边界">第 5 课：超时、HTTPS 与重试边界</h2>
+<p>timeout 限制部分阻塞网络操作，不等于整个任务的严格总时间上限；DNS 和多次读写还可能受系统行为影响。严谨的任务总时限将在任务平台单元由工作进程控制。</p>
+<p>HTTPS 使用 TLS 保护传输；本项目使用 HTTPSConnection 默认的证书与主机名校验。证书错误应作为失败排查，不通过关闭验证来让检查“变绿”。本阶段自动化验证使用本地 HTTP，尚未运行本地证书链用例。</p>
+<p>重试需要回答三件事：哪些错误值得重试、最多几次、重复执行是否安全。网络抖动可以考虑有限重试；配置格式错误不应重试；提交发布或创建任务的 POST，超时不代表服务端没执行，盲目重试可能重复操作。</p>
+<p>当前项目不自动重试、不自动跟随 3xx 重定向，避免把实际检查目标和执行次数变得不明确。项目的 GET 也只应指向你有权限检查、符合读取语义的地址。</p>
+<p>练习：某 POST 超时后应立刻无限重试吗？答案：不应。应先查询任务状态，后续引入请求标识和幂等控制。</p>
+<h2 id="第-6-课接收请求与输入校验">第 6 课：接收请求与输入校验</h2>
+<p>Handler 继承 BaseHTTPRequestHandler，do_GET/do_POST 是父类约定的入口。self.path 包含路径与查询，urlsplit 后取 path 才适合路由比较。</p>
+<p>POST 处理顺序：确认路径 → 检查 Content-Type → 检查长度与读取方式 → 读取字节 → 解码 → JSON 解析 → 校验结构和字段 → 执行业务 → 返回 JSON。</p>
+<p>本项目只接受 <code>{&quot;ids&quot;: [&quot;self&quot;]}</code>。ids 必须为 1 到 5 个已配置目标，不能重复。客户端提交任意 URL 会被拒绝；实际 URL 由服务端可信配置决定，这样接口不变成任意地址探测入口。命令行直接检查模式则由运行者明确选择地址。</p>
+<p>只判断 JSON 是否有效不够：数字、字符串、空列表也是有效 JSON，但未必符合接口契约。还必须检查类型和允许值。</p>
+<p>练习：分别提交空对象、空 ids、未知 id、重复 id 和文本体。预期前四种为 400，声明 text/plain 的文本体为 415。</p>
+<h2 id="第-7-课保存结果与并发">第 7 课：保存结果与并发</h2>
+<p>GET /api/results 返回最后一批结果；尚未运行时是空列表。这里保存在内存，重启丢失，下一单元改为数据库持久化。</p>
+<p>ThreadingHTTPServer 为不同连接使用线程，内存状态会被多个请求访问。result_lock 保护结果读写；check_lock 同时只允许一个巡检批次，忙时返回 409。</p>
+<p>这里的 Lock 是对象，acquire 获得锁，release 释放。把 release 放在 finally，避免错误时永远不释放。不要执行网络请求时一直占着结果锁，否则读取结果也会被拖住。</p>
+<p>本例同步完成巡检后返回 200，不返回“任务已排队”。真正的排队、状态轮询与后台进程在第八单元实现，不能用线程服务就宣称已经有任务队列。</p>
+<h2 id="第-8-课运行完整项目">第 8 课：运行完整项目</h2>
+<p>详见 <a href="%E9%A1%B9%E7%9B%AE/04-%E7%BD%91%E7%AB%99%E5%B7%A1%E6%A3%80/index.html">项目说明</a>。默认目标 self 指向本服务自己的健康接口。采用多线程服务，处理 POST 的线程等待时，另一个线程可以回答健康请求。</p>
+<p>阅读顺序：client.main → server.Handler.do_POST → checker.run_checks → checker.check_url → reply → 客户端解析。</p>
+<p>练习一：增加一个已配置的本地目标，巡检两个目标。步骤答案：在 main 的 targets 增加名称与 URL，客户端 ids 增加对应名称；不要把任意 URL 参数直接交给后端。</p>
+<p>练习二：把未知接口返回结果改为带 code 字段的结构。答案：在 404 的 reply 字典增加固定 code，如 NOT_FOUND，客户端按字段读取；HTTP 状态仍为 404。</p>
+<p>练习三：统计成功、告警、失败数量。答案：遍历 results，按 status 分别累计；不能只用 HTTP 200 的数量作为 API 调用是否成功的判断。</p>
+<p>通过标准：能画出完整请求顺序；能用浏览器读取 GET、用 Python 提交 POST；能解释 TCP 字节与 JSON 对象的转换；能区分 404、超时、连接拒绝；能说明结果重启丢失的原因。</p>
+<h2 id="来源限制与后续">来源、限制与后续</h2>
+<p>基础 API 核对 <a href="https://docs.python.org/3/library/http.client.html" rel="noreferrer">http.client</a> 和 <a href="https://docs.python.org/3/library/http.server.html" rel="noreferrer">http.server</a>。TCP 实操使用本地实际下载的 Real Python 改写示例及其许可证。</p>
+<p>本服务只绑定本机，用于课程，不是生产 HTTP 服务器；没有认证、持久化、限流或完整请求线程上限。来源资料未整章复制，项目为本地编写。下一单元实现 SQL、SQLite 和资产 API。</p>
+</article><nav class="lesson-pager" aria-label="相邻章节"><a href="%E7%AC%AC%E5%9B%9B%E5%8D%95%E5%85%83-%E7%B1%BB%E7%BB%A7%E6%89%BF%E4%B8%8E%E6%A8%A1%E5%9D%97%E7%BB%84%E7%BB%87.html"><small>← 上一单元</small>类、继承与模块</a><a href="%E7%AC%AC%E5%85%AD%E5%8D%95%E5%85%83-%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%8E%E8%B5%84%E4%BA%A7%E7%AE%A1%E7%90%86%E5%90%8E%E7%AB%AF.html"><small>下一单元 →</small>数据库与资产 API</a></nav><footer class="page-footer"><span>运维编程手册</span><span>读概念 → 预测输出 → 动手运行 → 独立练习</span></footer></main><aside class="toc" aria-label="本页目录"><p>本页目录</p><a class="h2" href="#前置知识与目标">前置知识与目标</a><a class="h2" href="#第-1-课地址端口和名字">第 1 课：地址、端口和名字</a><a class="h2" href="#第-2-课tcp-和-socket">第 2 课：TCP 和 Socket</a><a class="h2" href="#第-3-课http-在字节流上定义格式">第 3 课：HTTP 在字节流上定义格式</a><a class="h2" href="#第-4-课用-python-发出请求">第 4 课：用 Python 发出请求</a><a class="h2" href="#第-5-课超时https-与重试边界">第 5 课：超时、HTTPS 与重试边界</a><a class="h2" href="#第-6-课接收请求与输入校验">第 6 课：接收请求与输入校验</a><a class="h2" href="#第-7-课保存结果与并发">第 7 课：保存结果与并发</a><a class="h2" href="#第-8-课运行完整项目">第 8 课：运行完整项目</a><a class="h2" href="#来源限制与后续">来源、限制与后续</a></aside></div>
+<dialog class="search-dialog"><form method="dialog" class="search-head"><label class="visually-hidden" for="search-input">搜索课程</label><input id="search-input" type="search" placeholder="搜索课程、概念或代码…" autocomplete="off"><button aria-label="关闭搜索">Esc</button></form><div class="search-results" aria-live="polite"><p>输入关键词，查找课程与配套源码。</p></div></dialog></body></html>

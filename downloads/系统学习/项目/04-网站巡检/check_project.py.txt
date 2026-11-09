@@ -1,0 +1,97 @@
+import http.client
+import json
+import pathlib
+import subprocess
+import sys
+import threading
+import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from checker import check_url
+from server import create_server
+
+
+class Target(BaseHTTPRequestHandler):
+    def log_message(self, message, *args):
+        pass
+
+    def do_GET(self):
+        if self.path == "/slow":
+            time.sleep(0.3)
+        code = 200
+        if self.path == "/missing":
+            code = 404
+        if self.path == "/redirect":
+            code = 302
+        try:
+            self.send_response(code)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+        except OSError:
+            pass
+
+
+def request(port, method, path, body=None, content_type="application/json"):
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+    try:
+        connection.request(method, path, body, {"Content-Type": content_type})
+        response = connection.getresponse()
+        return response.status, json.loads(response.read())
+    finally:
+        connection.close()
+
+
+def main():
+    target = ThreadingHTTPServer(("127.0.0.1", 0), Target)
+    base = "http://127.0.0.1:" + str(target.server_port)
+    thread = threading.Thread(target=target.serve_forever)
+    thread.start()
+    api = create_server(("127.0.0.1", 0), {"ok": base, "missing": base + "/missing"}, 0.1)
+    api_thread = threading.Thread(target=api.serve_forever)
+    api_thread.start()
+    try:
+        assert check_url(base)["status"] == "ok"
+        assert check_url(base + "/missing")["http_status"] == 404
+        assert check_url(base + "/redirect")["status"] == "alert"
+        assert check_url(base + "/slow", 0.05)["reason"] == "网络操作超时"
+        assert check_url("file:///tmp/test")["status"] == "error"
+        assert check_url("http://user:password@localhost/")["status"] == "error"
+        port = api.server_port
+        assert request(port, "GET", "/api/results")[1] == {"results": []}
+        status, value = request(port, "POST", "/api/checks", json.dumps({"ids": ["ok", "missing"]}))
+        assert status == 200
+        assert value["results"][0]["status"] == "ok"
+        assert value["results"][1]["status"] == "alert"
+        assert request(port, "GET", "/api/results")[1] == value
+        for invalid in [{}, {"ids": []}, {"ids": ["unknown"]}, {"ids": ["ok", "ok"]}, {"ids": [3]}, {"ids": ["ok"], "url": base}]:
+            assert request(port, "POST", "/api/checks", json.dumps(invalid))[0] == 400
+        assert request(port, "POST", "/api/checks", "{")[0] == 400
+        assert request(port, "POST", "/api/checks", "{}", "text/plain")[0] == 415
+        assert request(port, "POST", "/api/checks", " " * 4097)[0] == 413
+        assert request(port, "GET", "/missing")[0] == 404
+        api.check_lock.acquire()
+        try:
+            assert request(port, "POST", "/api/checks", '{"ids":["ok"]}')[0] == 409
+        finally:
+            api.check_lock.release()
+        assert request(port, "POST", "/api/checks", '{"ids":["ok"]}')[0] == 200
+        api.targets["self"] = "http://127.0.0.1:" + str(port) + "/api/health"
+        client = pathlib.Path(__file__).resolve().parent / "client.py"
+        result = subprocess.run([sys.executable, str(client), "--port", str(port)], capture_output=True, timeout=10)
+        assert result.returncode == 0
+        assert json.loads(result.stdout)["results"][0]["status"] == "ok"
+        result = subprocess.run([sys.executable, str(client), "--url", base, "--url", base + "/missing"], capture_output=True, timeout=10)
+        assert result.returncode == 1
+        assert len(json.loads(result.stdout)) == 2
+    finally:
+        api.shutdown()
+        api.server_close()
+        api_thread.join()
+        target.shutdown()
+        target.server_close()
+        thread.join()
+    assert check_url(base, 0.1)["status"] == "error"
+    print("PASS: real HTTP success, status errors, redirect, timeout, refused connection, API validation, results and busy lock")
+
+
+if __name__ == "__main__":
+    main()

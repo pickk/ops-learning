@@ -1,0 +1,70 @@
+# 01 Python 数据结构：只学当前用得到的
+
+更新日期：2026-11-08
+
+## 用途
+
+表示服务器清单、读取接口字段、筛选离线机器。重点从 GitHub Python 教程的数据结构章节提炼，练习结合本地运维场景重新编写。
+
+## 必会知识
+
+| 写法 | 含义 | 先会哪些操作 |
+| --- | --- | --- |
+| str：`"web-01"` | 文本 | strip、split；知道 encode 转字节 |
+| list：`["web-01", "db-01"]` | 有顺序的多项数据 | 下标从 0 开始、append、for |
+| dict：`{"name": "web-01"}` | 按名称取字段 | `[key]`、get、赋值、in |
+| set：`set()` | 去重 | add、in |
+| tuple：`("127.0.0.1", 8091)` | 固定位置的一组值 | 读取下标；不能替换元素 |
+
+还要会：`=` 是赋值，`==` 是比较；`if` 判断，`for` 遍历；`def` 定义函数，`return` 返回值，`print` 只显示。True/False 是布尔值，None 表示没有值。
+
+## 最重要的一种组合：列表里面放字典
+
+```python
+servers = [
+    {"name": "web-01", "online": True},
+    {"name": "db-01", "online": False}
+]
+
+names = []
+for server in servers:
+    if server["online"] == False:
+        names.append(server["name"])
+
+print(names)  # ['db-01']
+```
+
+`servers` 是所有机器；`server` 是循环当前拿出的那一台；`server["name"]` 取它的名称。把这三层分清，就能读懂很多接口处理代码。
+
+## 避开三个常见错误
+
+```python
+machine = {"name": "web-01"}
+print(machine.get("owner", "未分配"))
+```
+
+用 `get` 可以给缺失字段默认值；直接读取不存在的 `machine["owner"]` 会报错。
+
+```python
+first = ["web-01"]
+second = first
+second.append("db-01")
+print(first)  # ['web-01', 'db-01']
+```
+
+赋值没有复制列表，两个变量引用同一个列表。需要新的外层列表时用 `first.copy()`；嵌套字典仍共享，先记住这个边界。
+
+不要边遍历一个列表，边从这个列表删除项目。先生成结果列表，如上面的 names。
+
+## 跑、改、自己写
+
+运行 `python examples/structures.py`。然后完成：新增一台离线机器；输出它的名称；写一个函数根据机器名称查找字典，找不到返回 None。
+
+验收：能解释为什么用“列表 + 字典”，并能不用参考写出筛选循环。
+
+## 来源与暂缓项
+
+- [python/cpython：数据结构教程](https://github.com/python/cpython/blob/3.14/Doc/tutorial/datastructures.rst)：仅选 list、dict、set、tuple 与遍历。
+- [trekhleb/learn-python：列表示例](https://github.com/trekhleb/learn-python/blob/master/src/data_types/test_lists.py)：借鉴“操作后核对结果”的练法；不引入 pytest、推导式或整套测试环境。
+
+待办：完成上述筛选和查找；暂缓树、图、递归算法和复杂度证明。

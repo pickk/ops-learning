@@ -1,0 +1,35 @@
+# 代理 TLS 与综合项目阶段验证
+
+日期：2026-11-09
+
+## 背景
+
+接续第九单元的部署模板，补真实代理/TLS 证据、管理员审计查询与第十单元。此前“缺少 Nginx，未验证 TLS”的记录是当时事实，本记录更新该状态。
+
+## 已核实事实
+
+- Ubuntu 官方包 nginx_1.28.3-2ubuntu1_amd64.deb 下载到工作区 tmp，SHA256 为 `2e3aa6266ddb327feebc7e32e2e9c2c02fab7f9d5ca4cd34f5bf7f044568bb80`，与 WSL 已有 apt 包元数据一致。包仅解压供测试，未安装系统服务。旧更新版本的下载地址返回 404，改用镜像仍保留的基础版本；该测试版本不作为生产版本推荐。
+- check_tls.py 读取仓库的 Nginx 模板，仅替换测试域名、随机端口、后端端口、证书和临时路径。实际启动 Nginx，使用临时 CA 签发 localhost 证书；客户端显式信任临时 CA，未关闭校验，也未修改全局信任库。
+- 验证通过：可信 TLS、错误 CA/错误主机名拒绝、Secure/HttpOnly/SameSite Cookie、登录、资产写入、真实磁盘任务及结果、退出撤销、Origin/CSRF 拒绝、8KB 请求体限制、Nginx 登录限速。退出时关闭测试代理与后端，清理临时证书和数据库。
+- GET /api/audit 仅允许 admin，返回资产、账户与任务各最近 50 条。直接 HTTP 测试确认 viewer/operator 拒绝，结果不含密码、盐、派生值、Cookie、令牌摘要或 CSRF；Chromium 完整登录流程及审计读取通过。
+- [第十单元](第十单元-综合实战与独立开发.md)提供完整需求、分层阅读、独立重建、角色演练、故障定位、字段扩展、版本交付与自我验收。
+
+## 证据与复现
+
+项目目录内运行 `python check_auth.py`；按项目 README 设置浏览器认证测试模式后运行 `node check_browser.cjs`。Linux 具备 Nginx 与 OpenSSL 时运行：
+
+```text
+python3 check_tls.py --nginx /path/to/nginx
+```
+
+本次 TLS 运行使用工作区 tmp/nginx-runtime/usr/sbin/nginx，返回码 0 和 PASS；工具下载、解压和证书均未加入课程源码提交。浏览器与身份测试返回成功，覆盖本次审计新增行为。
+
+## 限制、推断与待办
+
+已验证的是临时回环端口实验链路。未安装系统级 systemd/Nginx 服务，未验证真实域名、公开 CA 续期、生产容量、长期运行或断电。临时 CA 成功不能推断公开证书部署成功。
+
+整套课程仍需按建设清单做最终逐项审查，尤其核对旧文档状态、下载材料可追溯性、示例约定与所有项目阅读入口。学习者独立练习的完成情况未知，不能用自动测试替代学习掌握。
+
+## 来源与关联
+
+[Ubuntu 官方包目录](https://archive.ubuntu.com/ubuntu/pool/main/n/nginx/)、本机 apt 元数据；[部署课程](第九单元补充-部署备份与恢复.md)、[项目说明](项目/05-资产API/README.md)、项目 check_tls.py、check_auth.py、check_browser.cjs。运行证据是本次工具输出；本记录不包含实际账户秘密。

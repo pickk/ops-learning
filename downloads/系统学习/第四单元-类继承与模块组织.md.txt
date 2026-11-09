@@ -1,0 +1,212 @@
+# 第四单元：类、继承与模块组织
+
+日期：2026-11-08
+
+## 本单元解决的问题
+
+前置知识：函数、参数、返回值、字典、异常和第三单元巡检工具。目标是理解谁调用谁，把不同检查项组织成能替换、能测试的模块，并能解释原网站的 Handler、self、do_GET。
+
+课程和项目为本地编写。基础机制核对 [Python 类教程](https://docs.python.org/3/tutorial/classes.html) 与 [模块教程](https://docs.python.org/3/tutorial/modules.html)。不使用装饰器、数据类或抽象类框架。
+
+## 第 1 课：为什么需要类
+
+普通函数足以完成许多脚本，不需要为了“高级”强行使用类。当一项功能同时需要保存配置、执行行为时，类可以把两者放在一起。
+
+```python
+class DiskRule:
+    def __init__(self, threshold):
+        self.threshold = threshold
+
+    def is_alert(self, used):
+        return used >= self.threshold
+
+rule = DiskRule(80)
+print(rule.is_alert(85))
+```
+
+类 DiskRule 定义一种对象应有的数据和行为；`DiskRule(80)` 创建实例，实例初始化时调用 __init__；threshold 保存到这个实例上。is_alert 是实例方法。结果为 True。
+
+__init__ 是初始化方法，不负责把实例作为 return 值返回，不要写 return self。初学可以先把创建理解为“得到对象，再初始化配置”。
+
+逐步执行：定义类时保存方法 → 创建实例 → 将 80 保存到 self.threshold → 调用方法传入 85 → 与对象保存的 80 比较 → 返回 True。
+
+练习：再创建 DiskRule(90)，检查 85。答案：False。两个实例可用相同方法，但保存不同配置。
+
+## 第 2 课：self 到底是谁
+
+```python
+class Label:
+    def __init__(self, name):
+        self.name = name
+
+    def show(self):
+        print(self.name)
+
+first = Label("web-01")
+second = Label("db-01")
+first.show()
+second.show()
+Label.show(first)
+```
+
+输出 web-01、db-01、web-01。调用 `first.show()` 时，Python 将 first 作为实例参数交给方法，所以定义里需要 self，但正常调用时不用手动传它。`Label.show(first)` 展示了显式传对象的形式。
+
+self 是惯用的参数名，指当前调用的实例。`name` 是当前函数的局部参数；`self.name` 是对象属性，在这次调用结束后仍可通过对象读取。不要把 self 理解成类本身或一个全局变量。
+
+练习：修改 first.name 后调用 second.show，是否改变？答案：不改变，因为它们是两个实例，各有自己的 name 属性。
+
+## 第 3 课：实例状态与共享状态
+
+```python
+class Report:
+    def __init__(self):
+        self.items = []
+
+    def add(self, message):
+        self.items.append(message)
+
+first = Report()
+second = Report()
+first.add("磁盘告警")
+print(first.items)
+print(second.items)
+```
+
+输出 `['磁盘告警']` 和 `[]`。每次初始化都创建新列表。如果把 `items = []` 放在类定义中、方法外，它会成为类属性，实例通过它修改同一个列表时会相互影响。
+
+不要把函数默认参数写成需要每次独立的可变列表，例如 `def add(items=[])`。使用 None 作为默认值，再在函数内新建列表；与类属性共享问题不同，但都会产生跨调用共享数据的意外。
+
+练习：给 second 加一条记录，确认 first 不变。通过标准：能指出哪个位置真正创建了列表。
+
+## 第 4 课：继承、覆盖和调用顺序
+
+```python
+class BaseCheck:
+    def run(self):
+        print("开始")
+        result = self.evaluate()
+        print("结束")
+        return result
+
+    def evaluate(self):
+        raise NotImplementedError("需要子类实现")
+
+class DemoCheck(BaseCheck):
+    def evaluate(self):
+        return "检查结果"
+
+check = DemoCheck()
+print(check.run())
+```
+
+输出开始、结束、检查结果。DemoCheck 没写 run，Python 会从父类找到 run；run 内的 self 仍然是 DemoCheck 实例，因此 self.evaluate 找到子类覆盖的方法。
+
+调用栈如下：
+
+```text
+主程序 check.run()
+  → BaseCheck.run(self=check)
+    → DemoCheck.evaluate(self=check)
+    ← 返回“检查结果”
+  ← 返回“检查结果”
+主程序 print
+```
+
+继承复用公共流程，覆盖改变具体步骤。没有覆盖 evaluate 时会抛 NotImplementedError，这是提醒开发者实现方法，不应被当作正常“检查失败”悄悄忽略。
+
+### 父类初始化也要安排
+
+```python
+class Base:
+    def __init__(self, name):
+        self.name = name
+
+class Child(Base):
+    def __init__(self, name, path):
+        Base.__init__(self, name)
+        self.path = path
+
+item = Child("disk", "/")
+print(item.name, item.path)
+```
+
+子类自己定义 __init__ 后，父类初始化不会自动再执行一次，所以这里显式调用。单继承入门用这种形式看清参数；以后遇到多继承需要学习 super 与方法解析顺序，不能把这种写法无条件推广到复杂继承。
+
+练习：删除父类初始化调用后读取 item.name，会发生什么？答案：没有设置 name，会出现 AttributeError。修改时只在练习副本操作。
+
+## 第 5 课：现在解释 Handler 和 do_GET
+
+原网站 `class Handler(BaseHTTPRequestHandler)` 使用父类的请求读取和分派机制，再提供自己的 do_GET/do_POST。
+
+父类读出 GET，按约定查找 do_GET，并调用这个实例的方法。它能调用你的方法，是因为实际创建的是 Handler 实例。方法名字要遵循框架约定，不是任意函数名都会被调用。
+
+对照上面的例子：BaseHTTPRequestHandler 提供类似 run 的公共处理流程，你的 do_GET 类似 evaluate。这里只是结构类比，真实 HTTP 库的内部方法不叫示例的 run。
+
+`ThreadingHTTPServer((host, port), Handler)` 传的是类。服务器之后用连接等参数创建对象。你不能把它随意换成 Handler()，因为创建时需要服务端提供参数。
+
+练习：用自己的话解释这四句：类是什么、self 是什么、父类为什么能调用子类方法、do_GET 为什么不能改名。参考答案就在前述调用链，能说清“实际实例是 Handler”才算理解关键点。
+
+## 第 6 课：组合——让对象一起工作
+
+```python
+class MessageCheck:
+    def run(self):
+        return "ok"
+
+class Runner:
+    def __init__(self, checks):
+        self.checks = list(checks)
+
+    def run_all(self):
+        results = []
+        for check in self.checks:
+            results.append(check.run())
+        return results
+
+runner = Runner([MessageCheck(), MessageCheck()])
+print(runner.run_all())
+```
+
+输出 `['ok', 'ok']`。Runner 包含检查器，它本身不是检查器，所以这里使用组合，没有继承 MessageCheck。只要对象提供约定的 run，Runner 就能调用，不强制继承同一个父类。
+
+`list(checks)` 复制外层列表，调用方后来删除列表元素不会改变 Runner 的列表；其中的检查器对象仍然共享。这正好对应第二单元的浅复制。
+
+选择方式：单次计算先用函数；需要保存配置时可用对象；多个对象一起工作用组合；确实要复用父类流程时再用继承。不要把“每个文件一个类”当成固定规则。
+
+## 第 7 课：拆成模块与清晰接口
+
+项目分为 checks.py、runner.py、main.py：
+
+- checks 保存检查逻辑，不解析命令行、不打印报告。
+- runner 接收检查器，调用 run 并收集结果。
+- main 处理参数，组装对象，输出 JSON，决定退出码。
+
+`from checks import DiskCheck` 导入类，`import checks` 则需要写 `checks.DiskCheck`。模块不是把文字复制进来；Python 加载模块并执行顶层语句。因此初始化网络服务、读取命令行等动作放在 main 入口，避免 import 时触发。
+
+不要把文件命名为 json.py、socket.py，容易遮蔽标准库模块。模块搜索路径与文件路径是两件事；直接运行 main.py 时，脚本所在目录通常会加入模块搜索路径，但业务文件的相对路径仍按当前工作目录解释。
+
+检查结果约定固定字段 name、status、detail；status 为 ok、alert、error。ok 是执行成功且正常；alert 是执行成功但发现异常；error 是无法完成检查。接口一致后，上层不必了解每个检查器的内部细节。
+
+练习：如果一个检查器返回字符串而其他返回字典，为什么汇总容易出错？答案：调用方无法统一读取字段，因此在公共层校验结果格式。
+
+## 第 8 课：测试与可替换依赖
+
+先通过固定数据验证分支，再通过真实文件或磁盘确认集成。固定测试对象不是伪造生产结果，而是让测试不依赖机器偶然状态。
+
+配套 check_project.py 定义 FixedCheck、FailingCheck 和 PlainCheck：分别提供可控正常/告警、模拟读取失败、展示不继承也能被 Runner 使用。测试核对错误后是否继续执行其余检查、不同实例是否隔离、入口 import 是否有副作用。
+
+测试失败应给出线索，不要修改断言来迎合错误实现。assert 用于开发测试，Python -O 可移除断言，所以业务数据校验必须显式 if/raise，不依赖 assert。
+
+## 第 9 课：完整项目与练习答案
+
+运行 [可替换检查器项目](项目/03-可替换检查器/README.md)。先解释 DiskCheck 创建过程，再手工追踪 Runner.run_all 到 BaseCheck.run，再到 DiskCheck.evaluate 的调用。
+
+练习一：实现 NonEmptyFileCheck。它继承 BaseCheck，保存 path，evaluate 用 os.path.getsize，返回 ok 为大小大于 0、detail 为说明。缺文件由 OSError 交给 BaseCheck.run 转成 error。构造时调用 BaseCheck.__init__ 设置名称。将对象加入 main 的 checks 列表，Runner 不需要修改。
+
+练习二：输出报告总数与失败数。参考步骤：新增普通函数 summarize(results)，初始化计数，遍历 status，只将 error 算作运行失败；返回字典。不要把统计代码塞进每个检查器。
+
+练习三：给每个 Runner 独立的检查器列表。参考：已用 list(checks) 复制外层；若要求对象也独立，应分别构造实例，而不是误以为浅复制已复制实例。
+
+验收：新增一种检查器而不改 Runner；能解释实例与类、初始化与调用、继承与组合；业务错误有结构化结果，未实现方法等编程错误能暴露；能运行测试并理解它实际覆盖的行为。
+
+待办：完成扩展练习后进入网络单元，把检查器应用于 HTTP 地址。项目没有实现插件自动加载、多继承或异步任务；当前不需要为了这些功能增加概念负担。

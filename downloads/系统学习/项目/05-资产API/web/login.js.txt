@@ -1,0 +1,21 @@
+"use strict";
+document.getElementById("login-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var button = document.getElementById("login-button");
+    if (button.disabled) { return; }
+    button.disabled = true;
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/login");
+    xhr.timeout = 6000;
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.setRequestHeader("X-Requested-With", "ops-course");
+    function failed(text) { button.disabled = false; document.getElementById("password").value = ""; document.getElementById("login-message").textContent = text; }
+    xhr.onload = function () {
+        if (xhr.status === 200) { window.location.reload(); return; }
+        try { failed(JSON.parse(xhr.responseText).error); }
+        catch (error) { failed("登录响应格式异常"); }
+    };
+    xhr.onerror = function () { failed("无法连接服务，请稍后重试"); };
+    xhr.ontimeout = function () { failed("登录超时，请重新载入页面核对登录状态"); };
+    xhr.send(JSON.stringify({username: document.getElementById("username").value, password: document.getElementById("password").value}));
+});

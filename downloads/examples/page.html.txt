@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>前端与 Python 交互练习</title>
+    <script src="/browser.js" defer></script>
+</head>
+<body>
+    <h1>服务器列表（演示数据）</h1>
+    <p>点击按钮，浏览器会通过 HTTP 请求 Python 接口。</p>
+    <button id="load" type="button">加载服务器</button>
+    <pre id="output" role="status" aria-live="polite">等待操作</pre>
+</body>
+</html>

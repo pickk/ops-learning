@@ -1,0 +1,152 @@
+# 第六单元：数据库与资产管理后端
+
+日期：2026-11-08
+
+## 起点、目标与学习方法
+
+前置：能读懂字典、函数、异常、类和第五单元的 HTTP 请求。遇到 `self` 或 `do_GET` 仍不清楚时，先回第四、第五单元。这里解决一个具体问题：网站保存的服务器清单，如何在程序关闭后继续存在？
+
+学完要能独立完成资产的新增、查询、修改、删除，说明一次请求如何变成 SQL，并解释失败时数据是否改变。每节先手写预测，再运行，再做练习。不要直接背完整 server.py。
+
+## 1. 从列表到表
+
+之前的 `assets = []` 存在进程内存里。重新启动会创建新列表。数据库把记录保存在文件中，由数据库引擎负责查询和修改。
+
+把资产想成一张表：每行是一台服务器，每列是一种属性。`id` 是记录身份，`name` 是显示名称。机器改名后仍应保留原来的 id。SQL 是描述查询和变更的语言；Python 把 SQL 交给 SQLite 执行，不是 Python 自己解析 SQL。
+
+| 列 | 含义 | 本项目规则 |
+| --- | --- | --- |
+| id | 资产编号 | 数据库生成，不复用已提交并删除的编号 |
+| name | 资产名称 | 非空、唯一、最多 80 字符 |
+| host | 地址文本 | 非空、最多 253 字符；本单元不做 DNS 或连通性验证 |
+| port | 服务端口 | 整数 1—65535 |
+| environment | 所属环境 | dev、test、prod |
+
+主键识别一行；唯一约束防止同名；`NOT NULL` 防止空值，但不能单独阻止空字符串。应用校验和数据库约束各自有作用。
+
+练习：两个请求同时创建 web01，先查询是否存在再插入，能完全避免重复吗？不能，两次查询都可能看到不存在。数据库的 UNIQUE 才是最后一道约束。
+
+## 2. 第一次完整执行 SQL
+
+保存以下内容为 `sql_first.py`，运行 `python sql_first.py`。使用内存数据库是为了每次练习都有相同起点。
+
+```python
+import sqlite3
+
+connection = sqlite3.connect(":memory:", isolation_level=None)
+try:
+    connection.execute("CREATE TABLE assets(id INTEGER PRIMARY KEY, name TEXT UNIQUE, port INTEGER)")
+    connection.execute("BEGIN")
+    cursor = connection.execute("INSERT INTO assets(name, port) VALUES(?, ?)", ("web01", 80))
+    asset_id = cursor.lastrowid
+    connection.commit()
+    row = connection.execute("SELECT id, name, port FROM assets WHERE id=?", (asset_id,)).fetchone()
+    print(row)
+    connection.execute("UPDATE assets SET port=? WHERE id=?", (8080, asset_id))
+    print(connection.execute("SELECT port FROM assets WHERE id=?", (asset_id,)).fetchone())
+    connection.execute("DELETE FROM assets WHERE id=?", (asset_id,))
+    print(connection.execute("SELECT COUNT(*) FROM assets").fetchone()[0])
+finally:
+    connection.close()
+```
+
+预期三行输出：`(1, 'web01', 80)`、`(8080,)`、`0`。
+
+逐步理解：connect 得到连接；execute 执行语句并返回游标；lastrowid 取得刚生成的编号；fetchone 取一行，找不到返回 None；fetchall 取多行。一个元素的元组必须有逗号，所以参数写 `(asset_id,)`。COUNT 的返回值也是一行，`[0]` 取其中的计数。
+
+这里设置 `isolation_level=None`，不让 Python 自动开启事务；我们用 BEGIN 显式控制。未包在显式事务里的独立 UPDATE、DELETE 会自动提交。项目中的多条写语句则始终放在显式事务内。
+
+练习：去掉 UPDATE 的 WHERE 会怎样？它会修改全部行。先用同样条件 SELECT 确认目标，是写运维数据脚本时很有用的习惯。
+
+## 3. 值与 SQL 结构必须分开
+
+`WHERE name=?` 中的问号是值的位置，具体名称作为第二个参数传入。即使名称含引号，仍会被当作文本。不要通过字符串相加拼出用户提供的名称。
+
+参数只能代替值，不能代替表名、列名或排序方向。如果允许用户选择排序列，必须先将输入映射到程序内定义的允许列表。本项目固定按 id 排序，暂时不开放排序设置。
+
+练习：把上一节名称改成 `x'); DROP TABLE assets; --`。用参数绑定仍应成功存入普通文本，表不会消失。项目验证也检查这一行为。
+
+## 4. 为什么需要事务
+
+资产修改后还要写一条审计记录。如果资产已改、审计失败，管理员就无法完整追踪操作。把两条语句放进同一个事务，要求一起成功或者一起撤回。
+
+阅读 `storage.py` 的 `Store.write`，按下面顺序标注代码：
+
+1. 检查操作类型与输入，尚未接触数据库。
+2. 创建连接，执行 BEGIN IMMEDIATE，申请写事务。
+3. INSERT、UPDATE 或 DELETE 修改资产。
+4. INSERT 写审计。
+5. commit 提交；任何中间异常先 rollback，再用 raise 交给上层。
+6. finally 关闭连接，无论成功失败都执行。
+
+这里捕获 Exception 是为了回滚后重新抛出，没有把失败伪装成成功。audit 的 asset_id 故意不设置删除级联：删除资产后仍要保留操作记录。当前审计只有动作、编号和 UTC 时间，没有操作者，后续登录单元再加入身份。
+
+SQLite 同时只有一个写事务。另一个写入者占用时，本项目最多等待约 2 秒，然后返回数据库暂不可用。事务内不要进行远程巡检或等待用户输入，否则会长期占锁。读取列表时也使用事务，让总数和列表来自同一个读取快照。
+
+练习：审计插入失败后，之前更新的资产名应是什么？应是旧名称。配套验证通过临时触发器故意制造这一故障，再检查数据库，而非仅检查响应码。
+
+## 5. 将数据操作变成 HTTP 接口
+
+| 请求 | 作用 | 成功状态 |
+| --- | --- | --- |
+| GET /api/assets?limit=20&offset=0 | 分页列表 | 200 |
+| POST /api/assets | 新增，提交四个字段 | 201 |
+| GET /api/assets/1 | 查一条 | 200 |
+| PUT /api/assets/1 | 完整替换四个可编辑字段 | 200 |
+| DELETE /api/assets/1 | 删除 | 200 |
+
+一次新增的调用链：HTTPServer 接收请求 → 基类解析方法 → 调用你写的 do_POST → dispatch 判断路径 → read_json 解码 → Store.write 验证并执行事务 → reply 把字典编码成 JSON。
+
+`do_POST` 是基类约定的方法名；`dispatch` 和 `reply` 是本项目自行定义的名字。它们不会被 HTTP 库自动调用，是 do_POST 显式调用 dispatch，dispatch 再调用 reply。
+
+每个 Store 操作新建并关闭自己的连接。多个请求线程共享的是 Store 中的文件路径，不是同一个数据库连接。
+
+练习：为什么 read_json 返回字典后不能立刻执行 SQL？JSON 合法不等于业务合法。`{"port":true}` 是合法 JSON，但不是有效端口。
+
+## 6. 校验、错误和分页
+
+先限制消息体大小，再解析 JSON，最后检查字段。缺字段、多字段、错误类型、空文本、非法环境都返回 400；错误内容类型返回 415；超长请求体返回 413。同名或数据库约束冲突返回 409；不存在返回 404；已实现的方法用于错误路径返回 405。其他未实现方法由标准库处理。
+
+`bool` 在 Python 中属于整数的子类，所以端口使用 `type(port) is int` 排除 True。前端校验只能帮助输入，服务端必须独立校验。错误响应不暴露数据库路径或原始 SQL。
+
+分页：limit 是最多取多少条，offset 是跳过多少条。每页 20 条时，前三页 offset 是 0、20、40。排序固定为 id，避免依赖数据库未承诺的默认顺序。删除或新增数据后，跨请求翻页仍可能发生位置变化；本单元没有实现游标分页或版本冲突检测。
+
+练习：总数 43，每页 20，第三页有几条？3 条。请求 offset=100 会怎样？返回空列表，同时 total 仍为 43，不是 404。
+
+## 7. 运行、阅读和修改项目
+
+进入 [05-资产API](项目/05-资产API/README.md)，先运行 check_project.py，再启动 server.py。按 validate_asset → Store.get_asset → Store.write → Handler.dispatch 的顺序阅读，不要一开始钻进测试故障注入。
+
+第一轮只新增、查询；第二轮修改、删除；第三轮输入重复名称和非法端口。每次操作记录请求方法、路径、请求体、响应码、数据库变化这五项。
+
+把服务关闭，使用同一数据库路径再启动，查询之前保留的资产。若丢失，先检查启动目录：默认相对路径基于当前工作目录，不是源码目录。正式运行时应该传绝对路径。
+
+## 8. 独立练习与参考答案
+
+练习 A：不用 HTTP，在项目目录新建练习脚本，用 Store 新增一台服务器并读取。自己使用独立的练习数据库，不连接正在使用的资产库。
+
+```python
+from storage import Store
+
+store = Store("exercise.sqlite3")
+asset = {"name": "exercise01", "host": "127.0.0.1", "port": 80, "environment": "dev"}
+created = store.write("create", value=asset)
+print(store.get_asset(created["id"]))
+store.write("delete", created["id"])
+```
+
+练习 B：新增两条不同名称的资产，只查询第二条。答案：调用 list_assets(1, 1)，先确认练习数据库原来为空；不要把 offset 当作资产编号。
+
+练习 C：解释重复创建为何没有额外审计。答案：UNIQUE 失败后进入异常分支并回滚，随后才由 HTTP 层映射成 409。
+
+练习 D：为资产增加备注。先列出必须修改的地方再动手。参考：数据库新列、输入字段集合与类型长度检查、INSERT、UPDATE、接口样例、测试。CREATE TABLE IF NOT EXISTS 不会自动升级旧表；保留旧数据时需要明确迁移，不能删库冒充升级。
+
+通过标准：不看答案写出 A、B；能画出一次 POST 的调用顺序；能解释参数绑定、事务、WHERE 和分页；能让重复名称与错误端口稳定失败，同时原数据不变。
+
+## 已验证事实、限制与后续
+
+2026-11-08：配套真实 HTTP 验证通过，覆盖 CRUD、输入错误、分页、参数绑定、审计失败回滚、写锁、关闭并重建服务后的读取和删除后审计保留。服务重建在同一测试进程进行，尚未验证进程崩溃、断电恢复或生产负载。
+
+当前只监听回环地址，没有登录、权限、备份及迁移功能；适合作为本地课程项目。下一单元补浏览器界面与 Node 调用，之后再补任务执行和身份控制。本单元不等于完整运维平台。
+
+来源：项目代码为本地教学实现。接口和连接用法核对 [Python sqlite3 文档](https://docs.python.org/3/library/sqlite3.html)，事务语义核对 [SQLite 事务文档](https://www.sqlite.org/lang_transaction.html)。已下载的作者资料仍见 [下载入口](../下载资料/README.md)；本章不是某份 GitHub 原文的删节版。

@@ -1,0 +1,26 @@
+import argparse
+import json
+import sys
+from checks import DiskCheck, FileCheck
+from runner import Runner, exit_code
+
+
+def main():
+    parser = argparse.ArgumentParser(description="组合不同检查器")
+    parser.add_argument("--disk-path", default=".")
+    parser.add_argument("--threshold", type=float, default=80)
+    parser.add_argument("--file", required=True)
+    args = parser.parse_args()
+    try:
+        checks = [DiskCheck(args.disk_path, args.threshold), FileCheck(args.file)]
+        runner = Runner(checks)
+        results = runner.run_all()
+        print(json.dumps(results, ensure_ascii=False, indent=2))
+        return exit_code(results)
+    except ValueError as error:
+        print("配置错误：", error, file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

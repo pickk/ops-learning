@@ -1,0 +1,82 @@
+"""Linux：验证实际进程启动、SIGTERM 收尾和重启持久化。"""
+import http.client
+import json
+import os
+from pathlib import Path
+import queue
+import secrets
+import subprocess
+import sys
+import tempfile
+import threading
+from auth import Auth
+from storage import Store
+
+
+def main():
+    if os.name == "nt":
+        raise SystemExit("此检查需要 Linux SIGTERM 语义，请在 WSL/Linux 运行")
+    directory = tempfile.TemporaryDirectory()
+    path = str(Path(directory.name) / "platform.sqlite3")
+    auth = Auth(Store(path))
+    password = secrets.token_urlsafe(24)
+    auth.set_user("lifecycle", password, "admin")
+    token, user = auth.login({"username": "lifecycle", "password": password})
+    process = None
+
+    def start():
+        child = subprocess.Popen([sys.executable, str(Path(__file__).with_name("secure_server.py")), "--db", path, "--port", "0"],
+                                 cwd=directory.name, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        ready = queue.Queue()
+        def read_ready():
+            ready.put(child.stdout.readline())
+        reader = threading.Thread(target=read_ready, daemon=True)
+        reader.start()
+        try:
+            line = ready.get(timeout=10)
+            port = int(line.strip())
+        except Exception:
+            child.kill()
+            child.communicate(timeout=5)
+            raise
+        return child, port
+
+    def request(port, method, path, value=None):
+        headers = {"Cookie": "ops_session=" + token, "X-CSRF-Token": user["csrf"], "Origin": "http://127.0.0.1:" + str(port), "Content-Type": "application/json"}
+        body = None
+        if value is not None:
+            body = json.dumps(value).encode("utf-8")
+        client = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+        try:
+            client.request(method, path, body, headers)
+            response = client.getresponse()
+            return response.status, json.loads(response.read())
+        finally:
+            client.close()
+
+    try:
+        process, port = start()
+        status, asset = request(port, "POST", "/api/assets", {"name": "survives-restart", "host": "127.0.0.1", "port": 80, "environment": "test"})
+        assert status == 201
+        process.terminate()
+        stdout, stderr = process.communicate(timeout=10)
+        assert process.returncode == 0, stderr
+        process, port = start()
+        status, assets = request(port, "GET", "/api/assets")
+        assert status == 200 and assets["items"][0]["id"] == asset["id"]
+        assert assets["items"][0]["name"] == "survives-restart"
+        process.terminate()
+        stdout, stderr = process.communicate(timeout=10)
+        assert process.returncode == 0, stderr
+        assert '"status": 200' in stderr
+        assert password not in stderr and token not in stderr and user["csrf"] not in stderr
+        print("PASS: real process restart, SIGTERM exit 0, persisted assets/sessions, released job lock, credential-free request log")
+    finally:
+        if process is not None and process.poll() is None:
+            process.kill()
+            process.communicate(timeout=5)
+        directory.cleanup()
+
+
+if __name__ == "__main__":
+    main()

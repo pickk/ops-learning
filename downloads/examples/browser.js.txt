@@ -1,0 +1,48 @@
+function loadServers() {
+    var output = document.getElementById('output');
+    var button = document.getElementById('load');
+    button.disabled = true;
+    output.textContent = '正在加载……';
+
+    var request = new XMLHttpRequest();
+    request.open('GET', '/api/servers');
+    request.timeout = 5000;
+
+    request.onload = function () {
+        button.disabled = false;
+        if (request.status !== 200) {
+            output.textContent = 'HTTP 错误：' + request.status;
+            return;
+        }
+        try {
+            var data = JSON.parse(request.responseText);
+            var lines = [];
+            var index;
+            for (index = 0; index < data.servers.length; index = index + 1) {
+                var server = data.servers[index];
+                var state = '离线';
+                if (server.online === true) {
+                    state = '在线';
+                }
+                lines.push(server.name + '：' + state);
+            }
+            output.textContent = lines.join('\n');
+        } catch (error) {
+            output.textContent = '返回内容格式不正确';
+        }
+    };
+
+    request.onerror = function () {
+        button.disabled = false;
+        output.textContent = '连接失败，请检查 Python 是否启动';
+    };
+
+    request.ontimeout = function () {
+        button.disabled = false;
+        output.textContent = '请求超时';
+    };
+
+    request.send();
+}
+
+document.getElementById('load').addEventListener('click', loadServers);

@@ -1,0 +1,184 @@
+import argparse
+import getpass
+import hashlib
+import hmac
+import re
+import secrets
+import time
+from storage import DomainError, Store
+
+
+ROUNDS = 600000
+
+
+def password_digest(password, salt, rounds):
+    return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), bytes.fromhex(salt), rounds).hex()
+
+
+def token_digest(token):
+    return hashlib.sha256(token.encode("ascii")).hexdigest()
+
+
+class Auth:
+    def __init__(self, store):
+        self.store = store
+        connection = store.connect()
+        try:
+            connection.executescript("""
+                CREATE TABLE IF NOT EXISTS users (
+                    username TEXT PRIMARY KEY,
+                    salt TEXT NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    rounds INTEGER NOT NULL,
+                    role TEXT NOT NULL CHECK(role IN ('viewer','operator','admin'))
+                );
+                CREATE TABLE IF NOT EXISTS sessions (
+                    token_hash TEXT PRIMARY KEY,
+                    username TEXT NOT NULL,
+                    csrf TEXT NOT NULL,
+                    expires REAL NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS login_attempts (
+                    username TEXT PRIMARY KEY,
+                    count INTEGER NOT NULL,
+                    reset_at REAL NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS auth_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT NOT NULL,
+                    action TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+        finally:
+            connection.close()
+
+    def set_user(self, username, password, role):
+        if not isinstance(username, str) or re.fullmatch(r"[A-Za-z0-9_-]{1,40}", username) is None:
+            raise ValueError("用户名需为 1—40 位字母、数字、下划线或连字符")
+        if not isinstance(password, str) or len(password) < 12 or len(password) > 128:
+            raise ValueError("密码需为 12—128 个字符")
+        if role not in ["viewer", "operator", "admin"]:
+            raise ValueError("未知角色")
+        salt = secrets.token_hex(16)
+        digest = password_digest(password, salt, ROUNDS)
+        connection = self.store.connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            connection.execute("INSERT INTO users VALUES(?,?,?,?,?) ON CONFLICT(username) DO UPDATE SET salt=excluded.salt,password_hash=excluded.password_hash,rounds=excluded.rounds,role=excluded.role",
+                               (username, salt, digest, ROUNDS, role))
+            connection.execute("DELETE FROM sessions WHERE username=?", (username,))
+            connection.execute("DELETE FROM login_attempts WHERE username=?", (username,))
+            connection.execute("INSERT INTO auth_events(username,action) VALUES(?,'local_account_update')", (username,))
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def login(self, value):
+        if not isinstance(value, dict) or set(value) != {"username", "password"}:
+            raise DomainError(400, "需要 username 与 password")
+        username = value["username"]
+        password = value["password"]
+        if not isinstance(username, str) or re.fullmatch(r"[A-Za-z0-9_-]{1,40}", username) is None:
+            raise DomainError(400, "用户名格式无效")
+        if not isinstance(password, str) or len(password) > 128:
+            raise DomainError(400, "密码格式无效")
+        now = time.time()
+        connection = self.store.connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            connection.execute("DELETE FROM login_attempts WHERE reset_at <= ?", (now,))
+            connection.execute("DELETE FROM sessions WHERE expires <= ?", (now,))
+            attempt = connection.execute("SELECT count FROM login_attempts WHERE username=?", (username,)).fetchone()
+            if attempt is not None and attempt["count"] >= 5:
+                raise DomainError(429, "该用户名尝试过于频繁，请一分钟后重试")
+            connection.execute("INSERT INTO login_attempts VALUES(?,1,?) ON CONFLICT(username) DO UPDATE SET count=count+1", (username, now + 60))
+            user = connection.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+            connection.commit()
+            salt = "00" * 16
+            rounds = ROUNDS
+            expected = "00" * 32
+            if user is not None:
+                salt, rounds, expected = user["salt"], user["rounds"], user["password_hash"]
+            valid = hmac.compare_digest(password_digest(password, salt, rounds), expected)
+            if not valid or user is None:
+                connection.execute("INSERT INTO auth_events(username,action) VALUES(?,'login_failed')", (username,))
+                raise DomainError(401, "用户名或密码错误")
+            token = secrets.token_urlsafe(32)
+            csrf = secrets.token_urlsafe(32)
+            connection.execute("BEGIN IMMEDIATE")
+            current = connection.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+            if current is None or current["password_hash"] != expected or current["role"] != user["role"]:
+                raise DomainError(401, "账户已变化，请重新登录")
+            connection.execute("DELETE FROM sessions WHERE username=?", (username,))
+            connection.execute("INSERT INTO sessions VALUES(?,?,?,?)", (token_digest(token), username, csrf, now + 3600))
+            connection.execute("INSERT INTO auth_events(username,action) VALUES(?,'login_success')", (username,))
+            connection.commit()
+            return token, {"username": username, "role": user["role"], "csrf": csrf}
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def session(self, token):
+        if not isinstance(token, str) or re.fullmatch(r"[A-Za-z0-9_-]{43}", token) is None:
+            raise DomainError(401, "请先登录")
+        connection = self.store.connect()
+        try:
+            row = connection.execute("SELECT users.username,users.role,sessions.csrf FROM sessions JOIN users USING(username) WHERE token_hash=? AND expires>?",
+                                     (token_digest(token), time.time())).fetchone()
+            if row is None:
+                raise DomainError(401, "会话已失效，请重新登录")
+            return dict(row)
+        finally:
+            connection.close()
+
+    def logout(self, token, username):
+        connection = self.store.connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            connection.execute("DELETE FROM sessions WHERE token_hash=?", (token_digest(token),))
+            connection.execute("INSERT INTO auth_events(username,action) VALUES(?,'logout')", (username,))
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def audit(self):
+        connection = self.store.connect()
+        try:
+            connection.execute("BEGIN")
+            result = {"assets": [], "accounts": [], "jobs": []}
+            for row in connection.execute("SELECT id,action,asset_id,actor,created_at FROM audit ORDER BY id DESC LIMIT 50"):
+                result["assets"].append(dict(row))
+            for row in connection.execute("SELECT id,username,action,created_at FROM auth_events ORDER BY id DESC LIMIT 50"):
+                result["accounts"].append(dict(row))
+            for row in connection.execute("SELECT id,task,state,submitted_by,created_at FROM jobs ORDER BY id DESC LIMIT 50"):
+                result["jobs"].append(dict(row))
+            connection.commit()
+            return result
+        finally:
+            connection.close()
+
+
+def main():
+    parser = argparse.ArgumentParser(description="本机创建/重置账户，撤销该用户已有会话")
+    parser.add_argument("--db", required=True)
+    parser.add_argument("--username", required=True)
+    parser.add_argument("--role", choices=["viewer", "operator", "admin"], required=True)
+    args = parser.parse_args()
+    password = getpass.getpass("密码（12—128 字符）：")
+    if password != getpass.getpass("再次输入："):
+        raise SystemExit("两次密码不一致")
+    Auth(Store(args.db)).set_user(args.username, password, args.role)
+    print("账户已保存，旧会话已撤销。")
+
+
+if __name__ == "__main__":
+    main()

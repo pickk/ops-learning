@@ -1,0 +1,122 @@
+import http.client
+import json
+import os
+import secrets
+import re
+import subprocess
+import sys
+from pathlib import Path
+import tempfile
+import threading
+import time
+from auth import Auth, token_digest
+from secure_server import create_secure_server
+from storage import Store
+
+
+def main():
+    lesson = Path(__file__).parents[2] / "第九单元-登录权限与部署.md"
+    examples = re.findall(r"```python\n(.*?)```", lesson.read_text(encoding="utf-8"), re.S)
+    assert len(examples) == 1
+    result = subprocess.run([sys.executable, "-c", examples[0]], capture_output=True, text=True, timeout=5)
+    assert result.returncode == 0 and result.stdout.strip() == "True"
+    directory = tempfile.TemporaryDirectory()
+    path = os.path.join(directory.name, "auth.sqlite3")
+    store = Store(path)
+    auth = Auth(store)
+    password = secrets.token_urlsafe(24)
+    for role in ["viewer", "operator", "admin"]:
+        auth.set_user(role, password, role)
+    server = create_secure_server(("127.0.0.1", 0), path)
+    thread = threading.Thread(target=server.serve_forever)
+    thread.start()
+    origin = server.origin
+
+    def request(method, path, value=None, cookie="", csrf="", extra=None):
+        headers = {"Content-Type": "application/json", "Origin": origin, "X-Requested-With": "ops-course", "Cookie": cookie, "X-CSRF-Token": csrf}
+        if extra is not None:
+            headers.update(extra)
+        body = None
+        if value is not None:
+            body = json.dumps(value).encode("utf-8")
+        connection = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=5)
+        try:
+            connection.request(method, path, body, headers)
+            response = connection.getresponse()
+            data = response.read().decode("utf-8")
+            return response.status, json.loads(data), response.getheader("Set-Cookie")
+        finally:
+            connection.close()
+
+    def login(username):
+        status, user, cookie = request("POST", "/api/login", {"username": username, "password": password})
+        assert status == 200
+        assert "HttpOnly" in cookie and "SameSite=Strict" in cookie
+        return cookie.split(";")[0], user["csrf"]
+
+    try:
+        assert request("GET", "/api/assets")[0] == 401
+        assert request("GET", "/api/jobs")[0] == 401
+        assert request("GET", "/api/assets", extra={"Host": "attacker.invalid"})[0] == 400
+        credentials = {"username": "admin", "password": password}
+        assert request("POST", "/api/login", credentials, extra={"Origin": "http://evil.invalid"})[0] == 403
+        assert request("POST", "/api/login", credentials, extra={"X-Requested-With": ""})[0] == 403
+        asset = {"name": "auth-test", "host": "127.0.0.1", "port": 80, "environment": "test"}
+        viewer, viewer_csrf = login("viewer")
+        assert request("GET", "/api/audit", cookie=viewer)[0] == 403
+        assert request("GET", "/api/assets", cookie=viewer)[0] == 200
+        assert request("POST", "/api/assets", asset, viewer, viewer_csrf)[0] == 403
+        assert request("POST", "/api/jobs", {"task": "disk_usage", "asset_id": None}, viewer, viewer_csrf)[0] == 403
+        operator, operator_csrf = login("operator")
+        assert request("GET", "/api/audit", cookie=operator)[0] == 403
+        assert request("POST", "/api/assets", asset, operator, operator_csrf)[0] == 403
+        status, job, unused = request("POST", "/api/jobs", {"task": "disk_usage", "asset_id": None}, operator, operator_csrf)
+        assert status == 202 and job["submitted_by"] == "operator"
+        admin, csrf = login("admin")
+        assert request("POST", "/api/assets", asset, admin)[0] == 403
+        assert request("POST", "/api/assets", asset, admin, viewer_csrf)[0] == 403
+        assert request("POST", "/api/assets", asset, admin, csrf, {"Origin": "null"})[0] == 403
+        status, item, unused = request("POST", "/api/assets", asset, admin, csrf)
+        assert status == 201
+        audit_status, audit_data, unused = request("GET", "/api/audit", cookie=admin)
+        assert audit_status == 200 and audit_data["assets"][0]["actor"] == "admin"
+        audit_text = json.dumps(audit_data)
+        for secret in [password, csrf, admin.split("=", 1)[1], "password_hash", "salt", "token_hash"]:
+            assert secret not in audit_text
+        connection = store.connect()
+        try:
+            assert connection.execute("SELECT actor FROM audit WHERE asset_id=?", (item["id"],)).fetchone()[0] == "admin"
+            raw = connection.execute("SELECT password_hash,salt FROM users WHERE username='admin'").fetchone()
+            assert raw["password_hash"] != password and len(raw["salt"]) == 32
+            assert connection.execute("SELECT COUNT(DISTINCT password_hash) FROM users").fetchone()[0] == 3
+            token = admin.split("=", 1)[1]
+            assert connection.execute("SELECT token_hash FROM sessions WHERE username='admin'").fetchone()[0] == token_digest(token)
+        finally:
+            connection.close()
+        status, unused, deleted = request("POST", "/api/logout", {}, admin, csrf)
+        assert status == 200 and "Max-Age=0" in deleted
+        assert request("GET", "/api/me", cookie=admin)[0] == 401
+        admin, csrf = login("admin")
+        new_admin, new_csrf = login("admin")
+        assert request("GET", "/api/me", cookie=admin)[0] == 401
+        auth.set_user("admin", password, "viewer")
+        assert request("GET", "/api/me", cookie=new_admin)[0] == 401
+        connection = store.connect()
+        try:
+            connection.execute("UPDATE sessions SET expires=? WHERE username='viewer'", (time.time() - 1,))
+        finally:
+            connection.close()
+        assert request("GET", "/api/me", cookie=viewer)[0] == 401
+        for number in range(5):
+            assert request("POST", "/api/login", {"username": "missing", "password": "wrong"})[0] == 401
+        assert request("POST", "/api/login", {"username": "missing", "password": "wrong"})[0] == 429
+        print("PASS: authentication, role matrix, origin/Host, CSRF, cookie flags, salts, hashed sessions, audit actor, logout, rotation, expiry, reset revocation, throttling")
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
+        directory.cleanup()
+
+
+if __name__ == "__main__":
+    main()

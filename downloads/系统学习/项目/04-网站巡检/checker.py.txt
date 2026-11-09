@@ -1,0 +1,53 @@
+import http.client
+import socket
+import time
+from urllib.parse import urlsplit
+
+
+def check_url(url, timeout=3):
+    connection = None
+    start = time.monotonic()
+    result = {"url": url, "status": "error", "http_status": None, "reason": ""}
+    try:
+        parsed = urlsplit(url)
+        if parsed.scheme not in ["http", "https"] or not parsed.hostname:
+            raise ValueError("地址必须使用 http 或 https")
+        if parsed.username is not None or parsed.password is not None:
+            raise ValueError("地址不能包含用户名或密码")
+        if parsed.fragment:
+            raise ValueError("巡检地址不能包含片段")
+        port = parsed.port
+        if parsed.scheme == "https":
+            connection = http.client.HTTPSConnection(parsed.hostname, port, timeout=timeout)
+        else:
+            connection = http.client.HTTPConnection(parsed.hostname, port, timeout=timeout)
+        path = parsed.path or "/"
+        if parsed.query:
+            path = path + "?" + parsed.query
+        connection.request("GET", path, headers={"User-Agent": "OpsLearning/1.0"})
+        response = connection.getresponse()
+        result["http_status"] = response.status
+        if response.status >= 200 and response.status < 300:
+            result["status"] = "ok"
+            result["reason"] = "收到成功响应头"
+        else:
+            result["status"] = "alert"
+            result["reason"] = "HTTP 状态不在 2xx；不自动跟随重定向"
+    except (TimeoutError, socket.timeout):
+        result["reason"] = "网络操作超时"
+    except (OSError, ValueError, http.client.HTTPException) as error:
+        result["reason"] = str(error)
+    finally:
+        if connection is not None:
+            connection.close()
+    result["elapsed_ms"] = round((time.monotonic() - start) * 1000, 2)
+    return result
+
+
+def run_checks(targets, ids, timeout=3):
+    results = []
+    for target_id in ids:
+        item = check_url(targets[target_id], timeout)
+        item["id"] = target_id
+        results.append(item)
+    return results

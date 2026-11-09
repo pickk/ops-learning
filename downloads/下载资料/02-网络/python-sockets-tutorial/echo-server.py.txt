@@ -1,0 +1,23 @@
+# Adapted from Real Python materials; MIT, ../LICENSE. Modified 2026-11-08.
+import socket
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+try:
+    s.bind(("127.0.0.1", 65432))
+    s.listen()
+    print("Waiting on 127.0.0.1:65432", flush=True)
+    accepted = s.accept()
+    conn = accepted[0]
+    addr = accepted[1]
+    conn.settimeout(10)
+    try:
+        print("Connected by", addr)
+        while True:
+            data = conn.recv(1024)
+            if not data:
+                break
+            conn.sendall(data)
+    finally:
+        conn.close()
+finally:
+    s.close()

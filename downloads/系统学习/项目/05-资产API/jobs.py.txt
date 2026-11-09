@@ -1,0 +1,226 @@
+import ipaddress
+import json
+import os
+import sqlite3
+import subprocess
+import sys
+import threading
+from pathlib import Path
+from storage import DomainError
+
+
+TASKS = {"disk_usage": "平台本机磁盘容量", "tcp_connect": "资产 IPv4 TCP 端口连接"}
+
+
+def run_command(command, timeout):
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", timeout=timeout, shell=False)
+    except subprocess.TimeoutExpired:
+        return "timed_out", {"error": "执行超过时限，子进程已终止"}
+    except OSError:
+        return "failed", {"error": "无法启动检查进程"}
+    try:
+        output = json.loads(result.stdout)
+    except ValueError:
+        return "failed", {"error": "检查进程未返回有效 JSON"}
+    if result.returncode != 0:
+        return "failed", output
+    return "succeeded", output
+
+
+def execute_job(job):
+    command = [sys.executable, "-X", "utf8", str(Path(__file__).with_name("task_worker.py")), job["task"], job["input_json"]]
+    return run_command(command, 3)
+
+
+class JobEngine:
+    def __init__(self, store, workers=2, capacity=20, executor=execute_job):
+        self.store = store
+        self.capacity = capacity
+        self.executor = executor
+        self.stop_event = threading.Event()
+        self.threads = []
+        self.lock_file = open(str(Path(store.path).resolve()) + ".worker.lock", "a+b")
+        try:
+            self.lock_file.seek(0, os.SEEK_END)
+            if self.lock_file.tell() == 0:
+                self.lock_file.write(b"0")
+                self.lock_file.flush()
+            self.lock_file.seek(0)
+            if os.name == "nt":
+                import msvcrt
+                msvcrt.locking(self.lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            self.initialize()
+            for number in range(workers):
+                thread = threading.Thread(target=self.work, name="ops-worker-" + str(number))
+                thread.start()
+                self.threads.append(thread)
+        except Exception:
+            self.close()
+            raise
+
+    def initialize(self):
+        connection = self.store.connect()
+        try:
+            connection.executescript("""
+                CREATE TABLE IF NOT EXISTS jobs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    task TEXT NOT NULL,
+                    input_json TEXT NOT NULL,
+                    state TEXT NOT NULL CHECK(state IN ('queued','running','succeeded','failed','timed_out')),
+                    result_json TEXT,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    started_at TEXT,
+                    finished_at TEXT
+                );
+                CREATE TABLE IF NOT EXISTS job_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    job_id INTEGER NOT NULL,
+                    state TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS jobs_state_id ON jobs(state, id);
+            """)
+            columns = []
+            for column in connection.execute("PRAGMA table_info(jobs)"):
+                columns.append(column["name"])
+            if "submitted_by" not in columns:
+                connection.execute("ALTER TABLE jobs ADD COLUMN submitted_by TEXT NOT NULL DEFAULT 'legacy-unknown'")
+            connection.execute("BEGIN IMMEDIATE")
+            connection.execute("INSERT INTO job_events(job_id,state) SELECT id,'failed' FROM jobs WHERE state='running'")
+            connection.execute("UPDATE jobs SET state='failed', result_json=?, finished_at=CURRENT_TIMESTAMP WHERE state='running'",
+                               (json.dumps({"error": "服务中断，执行结果未知；未自动重试"}, ensure_ascii=False),))
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def submit(self, value, actor="local-course"):
+        if not isinstance(value, dict) or set(value) != {"task", "asset_id"}:
+            raise DomainError(400, "需要 task 与 asset_id")
+        task = value["task"]
+        if not isinstance(task, str) or task not in TASKS:
+            raise DomainError(400, "任务不在白名单中")
+        if task == "disk_usage" and value["asset_id"] is not None:
+            raise DomainError(400, "本机检查的 asset_id 必须为 null")
+        if task == "tcp_connect" and (type(value["asset_id"]) is not int or value["asset_id"] < 1 or value["asset_id"] > 10 ** 18):
+            raise DomainError(400, "请选择有效资产编号")
+        connection = self.store.connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            count = connection.execute("SELECT COUNT(*) FROM jobs WHERE state IN ('queued','running')").fetchone()[0]
+            if count >= self.capacity:
+                raise DomainError(429, "等待与运行中的任务已满，请稍后提交")
+            data = {}
+            if task == "tcp_connect":
+                asset = connection.execute("SELECT * FROM assets WHERE id=?", (value["asset_id"],)).fetchone()
+                if asset is None:
+                    raise DomainError(404, "资产不存在")
+                try:
+                    host = str(ipaddress.IPv4Address(asset["host"]))
+                except ValueError:
+                    raise DomainError(400, "本单元 TCP 检查只接受 IPv4 地址，不做域名解析")
+                data = {"asset_id": asset["id"], "name": asset["name"], "host": host, "port": asset["port"]}
+            cursor = connection.execute("INSERT INTO jobs(task,input_json,state,submitted_by) VALUES(?,?,'queued',?)", (task, json.dumps(data, ensure_ascii=False), actor))
+            job_id = cursor.lastrowid
+            connection.execute("INSERT INTO job_events(job_id,state) VALUES(?,'queued')", (job_id,))
+            connection.commit()
+            return self.get(job_id)
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def get(self, job_id):
+        connection = self.store.connect()
+        try:
+            connection.execute("BEGIN")
+            row = connection.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone()
+            if row is None:
+                raise DomainError(404, "任务不存在")
+            result = dict(row)
+            result["input"] = json.loads(result.pop("input_json"))
+            raw = result.pop("result_json")
+            result["result"] = None
+            if raw is not None:
+                result["result"] = json.loads(raw)
+            result["events"] = []
+            for event in connection.execute("SELECT state,created_at FROM job_events WHERE job_id=? ORDER BY id", (job_id,)):
+                result["events"].append(dict(event))
+            connection.commit()
+            return result
+        finally:
+            connection.close()
+
+    def recent(self):
+        connection = self.store.connect()
+        try:
+            items = []
+            for row in connection.execute("SELECT id,task,state,created_at FROM jobs ORDER BY id DESC LIMIT 20"):
+                items.append(dict(row))
+            return {"items": items}
+        finally:
+            connection.close()
+
+    def claim(self):
+        connection = self.store.connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute("SELECT * FROM jobs WHERE state='queued' ORDER BY id LIMIT 1").fetchone()
+            if row is None:
+                connection.commit()
+                return None
+            connection.execute("UPDATE jobs SET state='running', started_at=CURRENT_TIMESTAMP WHERE id=?", (row["id"],))
+            connection.execute("INSERT INTO job_events(job_id,state) VALUES(?,'running')", (row["id"],))
+            connection.commit()
+            return dict(row)
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def finish(self, job_id, state, result):
+        if state not in ["succeeded", "failed", "timed_out"]:
+            raise ValueError("未知结束状态")
+        connection = self.store.connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            cursor = connection.execute("UPDATE jobs SET state=?,result_json=?,finished_at=CURRENT_TIMESTAMP WHERE id=? AND state='running'",
+                                        (state, json.dumps(result, ensure_ascii=False), job_id))
+            if cursor.rowcount != 1:
+                raise ValueError("任务不是运行状态")
+            connection.execute("INSERT INTO job_events(job_id,state) VALUES(?,?)", (job_id, state))
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def work(self):
+        while not self.stop_event.is_set():
+            try:
+                job = self.claim()
+                if job is not None:
+                    try:
+                        state, result = self.executor(job)
+                    except Exception:
+                        state, result = "failed", {"error": "检查执行器发生异常"}
+                    self.finish(job["id"], state, result)
+                    continue
+            except sqlite3.Error as error:
+                print("任务数据库错误：" + type(error).__name__, file=sys.stderr)
+            self.stop_event.wait(0.2)
+
+    def close(self):
+        self.stop_event.set()
+        for thread in self.threads:
+            thread.join()
+        self.lock_file.close()

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="从 Python 基础到运维平台开发：连续课程、动手练习与可下载的项目源码。"><meta name="theme-color" content="#163a35"><title>第九单元：登录、权限与部署 · 运维编程手册</title><link rel="icon" href="../assets/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="../assets/style.css"><link rel="stylesheet" href="../assets/highlight.css"><script defer src="../assets/app.js" data-root="../"></script></head>
+<body><a class="skip" href="#main">跳到正文</a><aside class="sidebar" id="sidebar"><a class="brand" href="../index.html"><span class="brand-icon">&gt;_</span><span>运维编程手册<small>从第一行代码开始</small></span></a><a class="sidebar-home " href="../index.html">⌂ 学习首页</a><p class="nav-label">系统课程 <span>10 单元</span></p><nav aria-label="系统课程"><a class="nav-lesson " href="%E7%AC%AC%E4%B8%80%E5%8D%95%E5%85%83-Python%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80.html" ><span>01</span>Python 编程基础</a><a class="nav-lesson " href="%E7%AC%AC%E4%BA%8C%E5%8D%95%E5%85%83-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E6%96%87%E4%BB%B6%E5%A4%84%E7%90%86.html" ><span>02</span>数据结构与文件处理</a><a class="nav-lesson " href="%E7%AC%AC%E4%B8%89%E5%8D%95%E5%85%83-Linux%E4%B8%8E%E8%BF%90%E7%BB%B4%E8%84%9A%E6%9C%AC%E5%B7%A5%E7%A8%8B.html" ><span>03</span>Linux 与运维脚本</a><a class="nav-lesson " href="%E7%AC%AC%E5%9B%9B%E5%8D%95%E5%85%83-%E7%B1%BB%E7%BB%A7%E6%89%BF%E4%B8%8E%E6%A8%A1%E5%9D%97%E7%BB%84%E7%BB%87.html" ><span>04</span>类、继承与模块</a><a class="nav-lesson " href="%E7%AC%AC%E4%BA%94%E5%8D%95%E5%85%83-%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E4%B8%8EHTTP%E6%8E%A5%E5%8F%A3.html" ><span>05</span>网络编程与 HTTP</a><a class="nav-lesson " href="%E7%AC%AC%E5%85%AD%E5%8D%95%E5%85%83-%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%8E%E8%B5%84%E4%BA%A7%E7%AE%A1%E7%90%86%E5%90%8E%E7%AB%AF.html" ><span>06</span>数据库与资产 API</a><a class="nav-lesson " href="%E7%AC%AC%E4%B8%83%E5%8D%95%E5%85%83-%E5%89%8D%E7%AB%AF%E4%B8%8ENode%E4%BA%A4%E4%BA%92.html" ><span>07</span>前端与 Node 交互</a><a class="nav-lesson " href="%E7%AC%AC%E5%85%AB%E5%8D%95%E5%85%83-%E8%BF%90%E7%BB%B4%E4%BB%BB%E5%8A%A1%E9%98%9F%E5%88%97%E4%B8%8E%E6%89%A7%E8%A1%8C.html" ><span>08</span>任务队列与执行</a><a class="nav-lesson active" href="%E7%AC%AC%E4%B9%9D%E5%8D%95%E5%85%83-%E7%99%BB%E5%BD%95%E6%9D%83%E9%99%90%E4%B8%8E%E9%83%A8%E7%BD%B2.html" aria-current="page"><span>09</span>登录权限与部署</a><a class="nav-lesson " href="%E7%AC%AC%E5%8D%81%E5%8D%95%E5%85%83-%E7%BB%BC%E5%90%88%E5%AE%9E%E6%88%98%E4%B8%8E%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91.html" ><span>10</span>综合实战与独立开发</a></nav><p class="nav-label">动手与查阅</p><nav class="extras" aria-label="参考资料"><a href="../projects.html">实战项目与源码 <span>05</span></a><a href="%E7%AC%AC%E4%B9%9D%E5%8D%95%E5%85%83%E8%A1%A5%E5%85%85-%E9%83%A8%E7%BD%B2%E5%A4%87%E4%BB%BD%E4%B8%8E%E6%81%A2%E5%A4%8D.html">部署、备份与恢复</a><a href="../%E4%B8%8B%E8%BD%BD%E8%B5%84%E6%96%99/index.html">作者资料与练习</a><a href="../notes.html">补充笔记</a></nav><div class="sidebar-footer"><span class="status-dot"></span>循序渐进 · 动手验证</div></aside>
+<div class="page"><header class="topbar"><button class="menu-toggle" aria-label="展开目录" aria-controls="sidebar" aria-expanded="false">☰</button><div class="breadcrumb">学习手册 <span>/</span> 系统课程</div><button class="search-trigger" aria-label="搜索课程"><span>⌕</span> 搜索课程、概念或代码 <kbd>/</kbd></button></header><main id="main" class="reader"><article class="prose"><h1 id="第九单元登录权限与部署">第九单元：登录、权限与部署</h1>
+<p>日期：2026-11-08</p>
+<p>建设状态：登录、会话、服务端权限、CSRF 与身份审计已有课程和项目。<a href="%E7%AC%AC%E4%B9%9D%E5%8D%95%E5%85%83%E8%A1%A5%E5%85%85-%E9%83%A8%E7%BD%B2%E5%A4%87%E4%BB%BD%E4%B8%8E%E6%81%A2%E5%A4%8D.html">部署备份补充课</a>已提供运行手册与模板，备份恢复和实际进程生命周期已验证；Nginx/TLS 实际运行及系统服务安装仍未验证。</p>
+<h2 id="起点与目标">起点与目标</h2>
+<p>前置：HTTP 请求头、JSON、数据库事务、类继承，以及第七、八单元的页面与任务。先完成本章身份部分，再进入部署部分。最终要理解“谁登录了”“他被允许做什么”“如何证明操作来自这次登录”，并能搭建具有这些约束的运维平台。</p>
+<p>为保留学习顺序，<a href="http://server.py" rel="noreferrer">server.py</a> 仍是第六至八单元无登录的本机实验入口；secure_server.py 是第九单元带身份检查的入口。它复用同一资产、任务和网页逻辑，但增加服务端身份检查。实际使用身份功能时必须启动 secure_server.py，不能只看到代码目录里有 <a href="http://auth.py" rel="noreferrer">auth.py</a> 就认为 <a href="http://server.py" rel="noreferrer">server.py</a> 自动变安全。</p>
+<h2 id="1-身份验证与授权分开理解">1. 身份验证与授权分开理解</h2>
+<p>身份验证回答“你是谁”，授权回答“这个身份能做什么”。用户名密码正确只通过第一步，不意味着能执行所有操作。</p>
+<table>
+<thead>
+<tr>
+<th>角色</th>
+<th>查看资产/任务/结果</th>
+<th>提交固定巡检</th>
+<th>增删改资产</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>viewer</td>
+<td>允许</td>
+<td>拒绝</td>
+<td>拒绝</td>
+</tr>
+<tr>
+<td>operator</td>
+<td>允许</td>
+<td>允许</td>
+<td>拒绝</td>
+</tr>
+<tr>
+<td>admin</td>
+<td>允许</td>
+<td>允许</td>
+<td>允许</td>
+</tr>
+</tbody>
+</table>
+<p>本课程按整个平台角色授权，不按资产分别授权。所有已登录用户能读取全部资产和任务结果。若需要“甲只能看甲的机器”，还必须增加资源归属及每次查询的过滤条件，不能仅依赖这个角色表。</p>
+<p>角色来自服务器数据库，不接受浏览器提交的 role。管理员账户由掌握服务器文件权限的人通过本机命令创建；没有公开注册或网页提权入口。</p>
+<p>练习：把浏览器中的角色提示改成 admin，可以修改资产吗？不能，服务端重新从会话关联的 users 读取角色。</p>
+<h2 id="2-密码不能直接存进数据库">2. 密码不能直接存进数据库</h2>
+<p>本项目使用 Python 标准库 PBKDF2-HMAC-SHA256，每个账户独立随机盐，迭代次数保存在用户记录中。盐不是密码，不要求保密；相同密码配不同盐会产生不同结果。随机盐防止相同密码产生相同存储值，较高计算成本增加离线猜测代价。</p>
+<p>保存以下代码为 password_first.py：</p>
+<pre><code class="language-python"><span class="hljs-keyword">import</span> hashlib
+<span class="hljs-keyword">import</span> hmac
+<span class="hljs-keyword">import</span> secrets
+
+password = <span class="hljs-string">&quot;only-for-this-example&quot;</span>
+salt = secrets.token_bytes(<span class="hljs-number">16</span>)
+saved = hashlib.pbkdf2_hmac(<span class="hljs-string">&quot;sha256&quot;</span>, password.encode(<span class="hljs-string">&quot;utf-8&quot;</span>), salt, <span class="hljs-number">600000</span>)
+entered = <span class="hljs-string">&quot;only-for-this-example&quot;</span>
+candidate = hashlib.pbkdf2_hmac(<span class="hljs-string">&quot;sha256&quot;</span>, entered.encode(<span class="hljs-string">&quot;utf-8&quot;</span>), salt, <span class="hljs-number">600000</span>)
+<span class="hljs-built_in">print</span>(hmac.compare_digest(saved, candidate))
+</code></pre>
+<p>输出 True；把 entered 改成其他值，应为 False。不要在实际程序里硬编码密码，这里只用于理解比较过程。也不要将普通 SHA256(password) 当作密码存储方案。</p>
+<p><a href="http://auth.py" rel="noreferrer">auth.py</a> 的 password_digest 负责派生值；set_user 生成盐并写入 users。用户名限制长度与字符，密码长度为 12—128 个字符。这里不声称密码长度本身可以替代安全部署。</p>
+<p>实现使用 600000 次迭代作为本课程固定参数，升级时需要根据部署环境评估成本和算法选择。保存参数是为了以后能识别旧记录；当前还没有登录时自动重哈希升级。</p>
+<p>练习：为何登录时不能再生成新盐？因为要用该用户原来保存的盐与参数重复计算，才能比较。新建或重置密码时才生成新盐。</p>
+<h2 id="3-cookie-与会话每次请求不必重新发送密码">3. Cookie 与会话：每次请求不必重新发送密码</h2>
+<p>登录成功后，服务器生成随机会话令牌，数据库只保存其 SHA256 摘要。令牌通过 Set-Cookie 交给浏览器；浏览器在后续请求中自动携带 Cookie，服务端取摘要查询 sessions，再关联 users。</p>
+<p>这里对令牌用普通 SHA256，与密码派生不同：令牌本身是足够长的随机值，不是人类选择的低熵密码。原始令牌不进入日志、网页 JavaScript 或数据库字段。</p>
+<p>会话有效期固定一小时，不随查询延长。每次成功登录替换同一用户的旧会话，因此一个用户只有一个有效登录。退出登录同时删除服务端会话并让浏览器 Cookie 到期；只删除浏览器显示状态是不够的。</p>
+<p>Cookie 属性：HttpOnly 防止普通页面脚本直接读令牌；SameSite=Strict 限制跨站携带；Path=/ 限定路径；Max-Age=3600 设置浏览器寿命。配置公开地址为 HTTPS 时额外设置 Secure。本机 HTTP 实验不加 Secure，不能由此推导出 HTTP 适合远程传密码。</p>
+<p>练习：复制退出前的 Cookie 再请求，会成功吗？不能，因为服务端记录已删除。清除网页文字但不撤销 sessions，则不具备这种效果。</p>
+<h2 id="4-csrfcookie-会自动发送所以写请求还需证明来源">4. CSRF：Cookie 会自动发送，所以写请求还需证明来源</h2>
+<p>浏览器自动发送 Cookie 给使用者带来方便，也意味着不能把“携带 Cookie”当作用户有意执行本次写操作的全部证据。</p>
+<p>项目采用三个相互配合的检查：配置的 Origin 必须与写请求来源完全一致；登录要求 application/json 与 X-Requested-With 标记；登录后的写操作还必须携带与当前会话对应的 X-CSRF-Token。</p>
+<p>CSRF 值由服务器随机生成，通过登录响应或 /api/me 返回，只留在页面变量中。app.js 的 request 在非 GET 请求中设置它。客户端传入另一个会话的 CSRF 值也不能通过。</p>
+<p>Host 必须等于配置公开地址的主机与端口，以免任意域名指向本机时被当作合法访问。反向代理部署时应显式设置 --origin，并保持正确 Host；本项目不根据不可信 X-Forwarded-* 头猜测公开地址。</p>
+<p>CSRF 不是授权：即使令牌正确，viewer 仍不能写入。它也不是 XSS 的补救：若页面脚本被攻击者控制，页面可读取 CSRF 值，所以仍要保留 textContent、固定静态路径与内容安全策略。</p>
+<p>练习：Node 发起 POST 为何也要带 Origin 与 CSRF？因为本项目服务端对所有客户端执行同一契约。不要为“脚本方便”增加跳过验证的后门。</p>
+<h2 id="5-沿登录调用链读源码">5. 沿登录调用链读源码</h2>
+<ol>
+<li>浏览器访问 /，SecureHandler 检查是否已有有效会话；没有则返回 login.html。</li>
+<li>login.js 读取输入，POST /api/login，密码只在请求体里。</li>
+<li>服务端检查 Host、Origin、请求标记与字段。</li>
+<li>Auth.login 预先记录一次尝试，读取账户参数，计算密码派生值。</li>
+<li>比较成功后再次核对账户未在计算期间变化，撤销旧会话，保存新会话及登录事件。</li>
+<li>Set-Cookie 写会话令牌，浏览器重新载入 /。</li>
+<li>工作台请求 /api/me 取得用户名、角色与 CSRF，再加载资产与任务。</li>
+</ol>
+<p>与第三、四单元联系：SecureHandler 继承 Handler，覆盖 dispatch，在复用原路由前执行权限判断。复用并不意味着省略父类逻辑；需要显式调用 Handler.dispatch(self)。</p>
+<p>练习：如果把身份检查写在 Handler.dispatch(self) 后面会怎样？资产变更可能已经完成，随后才拒绝响应，保护顺序错误。</p>
+<h2 id="6-尝试频率错误响应与日志">6. 尝试频率、错误响应与日志</h2>
+<p>同一用户名一分钟最多 5 次登录尝试，包括成功和失败。计数在数据库事务中先登记，再计算密码，避免并发请求绕过计数。未知用户名也执行一次派生运算，失败消息统一为“用户名或密码错误”。</p>
+<p>这只是教学层的限速，不等于完整抗暴力破解：攻击者可更换用户名；用户名级限制也可能被用来暂时阻止他人登录。对外部署仍需要代理层速率和连接限制、监控、审计及适当身份系统。</p>
+<p>auth_events 保存登录成功、失败、退出、本机账户更新；不记录密码、Cookie 或 CSRF。asset audit 增加 actor，jobs 增加 submitted_by，都由服务端身份赋值。原有记录迁移后使用 legacy-unknown，不伪造历史操作者。</p>
+<p>角色不足/来源不符/CSRF 错误返回 403；未登录/会话过期返回 401；尝试过多返回 429。接口错误不要输出原始 SQL、密码派生值或请求头。</p>
+<h2 id="7-创建账户并运行">7. 创建账户并运行</h2>
+<p>进入项目目录，先创建自己的管理员；密码由 getpass 交互输入，不在命令行参数、仓库或 README 中保存：</p>
+<pre><code class="language-text">python auth.py --db secure.sqlite3 --username myadmin --role admin
+python secure_server.py --db secure.sqlite3 --port 8096
+</code></pre>
+<p>访问 <a href="http://127.0.0.1:8096/%E3%80%82%E5%88%9B%E5%BB%BA%E8%B4%A6%E6%88%B7%E4%B8%8E%E5%90%AF%E5%8A%A8%E6%9C%8D%E5%8A%A1%E5%BF%85%E9%A1%BB%E4%BD%BF%E7%94%A8%E5%90%8C%E4%B8%80%E4%B8%AA%E6%95%B0%E6%8D%AE%E5%BA%93%E6%96%87%E4%BB%B6%EF%BC%9B%E5%BB%BA%E8%AE%AE%E5%AE%9E%E9%99%85%E8%BF%90%E8%A1%8C%E4%BC%A0%E7%BB%9D%E5%AF%B9%E8%B7%AF%E5%BE%84%E3%80%82%E4%B8%8D%E8%A6%81%E4%BD%BF%E7%94%A8%E5%85%88%E5%89%8D%E6%97%A0%E7%99%BB%E5%BD%95%E6%9C%8D%E5%8A%A1%E7%9A%84%E7%AB%AF%E5%8F%A3%E4%B8%8E%E5%AE%83%E6%B7%B7%E6%B7%86%E3%80%82" rel="noreferrer">http://127.0.0.1:8096/。创建账户与启动服务必须使用同一个数据库文件；建议实际运行传绝对路径。不要使用先前无登录服务的端口与它混淆。</a></p>
+<p>另建 reader（viewer）和 runner（operator）账户，按角色矩阵分别尝试操作。同一用户名再次运行 <a href="http://auth.py" rel="noreferrer">auth.py</a> 会重置密码和角色，并撤销其全部会话；这是本机管理操作，不是只在账户不存在时创建。</p>
+<p>部署操作继续学习<a href="%E7%AC%AC%E4%B9%9D%E5%8D%95%E5%85%83%E8%A1%A5%E5%85%85-%E9%83%A8%E7%BD%B2%E5%A4%87%E4%BB%BD%E4%B8%8E%E6%81%A2%E5%A4%8D.html">补充课</a>。当前只监听回环地址。本机实验不需要对公网开放端口或设置数据库宽泛权限。</p>
+<h2 id="8-验证不是只看能否登录">8. 验证不是只看能否登录</h2>
+<pre><code class="language-text">python check_auth.py
+</code></pre>
+<p>自动检查创建临时账户和数据库，不使用你的实际密码。它验证未登录拒绝、三种角色、CSRF/来源/Host、Cookie 属性、相同密码不同盐值、令牌摘要、身份审计、退出、重新登录撤销旧会话、过期、账户重置撤销和限速。</p>
+<p>浏览器综合检查在第七单元的 Playwright 环境下运行。PowerShell：</p>
+<pre><code class="language-powershell"><span class="hljs-variable">$env:COURSE_AUTH_TEST</span> = <span class="hljs-string">&quot;1&quot;</span>
+node check_browser.cjs
+<span class="hljs-built_in">Remove-Item</span> Env:COURSE_AUTH_TEST
+</code></pre>
+<p>Python 不在 PATH 时按项目 README 设置 COURSE_PYTHON。浏览器测试随机生成临时密码，经标准输入创建测试账户；不在命令行拼接密码。登录后执行真实资产维护与任务检查，再退出。旧的只读 Node 客户端未实现认证，访问安全入口返回 401 是预期行为，不能以此为由放开匿名读取。</p>
+<h2 id="9-独立练习与参考答案">9. 独立练习与参考答案</h2>
+<p>练习 A：画出密码、会话令牌、CSRF 三者去向。答案：密码进入服务端验证，不持久保存明文；会话令牌进入 HttpOnly Cookie，服务端存摘要；CSRF 进入页面内存并在写请求头中回传，服务端存在对应会话行。</p>
+<p>练习 B：operator 直接构造 PUT /api/assets/1，并带正确 CSRF，结果如何？403，数据库不应改变。验证权限不能只测试网页按钮是否隐藏。</p>
+<p>练习 C：管理员改密码后，旧页面仍显示资产，是不是旧会话仍有效？不一定。已有 DOM 可以保留旧数据；下一次请求应得到 401。页面显示与服务端会话状态必须分别检查。</p>
+<p>练习 D：为“查看审计”设计权限，不急着写代码。参考：先定义只有 admin 可查询；在查询前检查角色；分页限制；不返回秘密；为 viewer/operator 的直接 HTTP 请求各加一个拒绝测试。当前尚没有完整审计浏览页面，不应宣称已交付该页面。</p>
+<p>身份部分通过标准：能独立创建三种角色并验证矩阵；能说明 Cookie 与 CSRF 的差别；能定位一次 401 和一次 403；能解释继承入口的调用顺序；能验证旧会话撤销，而不只看退出按钮效果。</p>
+<h2 id="10-继续学习部署与恢复">10. 继续学习部署与恢复</h2>
+<p>配置与秘密、最小权限、反向代理及 TLS、systemd 生命周期、日志、升级回退、SQLite 在线备份与恢复已整理为<a href="%E7%AC%AC%E4%B9%9D%E5%8D%95%E5%85%83%E8%A1%A5%E5%85%85-%E9%83%A8%E7%BD%B2%E5%A4%87%E4%BB%BD%E4%B8%8E%E6%81%A2%E5%A4%8D.html">部署备份补充课</a>。当前 --origin 和 Secure Cookie 不代表已经部署或验证 HTTPS；补充课列出了实际检查范围及未验证项。</p>
+<p>尚未提供用户禁用/删除、多因素认证、资源级授权、账户恢复或审计保留策略。标准库 http.server 是教学服务，后续应明确它与生产服务器的边界。不能把本次身份验证通过扩展为“可以直接公网生产使用”。</p>
+<h2 id="已核实事实与来源">已核实事实与来源</h2>
+<p>2026-11-08：check_auth.py 实际通过；安全入口的 Chromium 登录、资产维护、磁盘/TCP 任务、退出登录通过；旧资产 API 与任务检查回归通过。角色与会话边界有直接 HTTP 证据。HTTPS、反向代理和备份恢复尚无验证证据。</p>
+<p>密码和 CSRF 原则核对 <a href="https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html" rel="noreferrer">OWASP 密码存储</a> 与 <a href="https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html" rel="noreferrer">OWASP CSRF 防护</a>。本章为本地课程设计与实现，不是安全审计认证；具体限制如上。关联代码与验证见 <a href="%E9%A1%B9%E7%9B%AE/05-%E8%B5%84%E4%BA%A7API/index.html">项目 README</a>。</p>
+</article><nav class="lesson-pager" aria-label="相邻章节"><a href="%E7%AC%AC%E5%85%AB%E5%8D%95%E5%85%83-%E8%BF%90%E7%BB%B4%E4%BB%BB%E5%8A%A1%E9%98%9F%E5%88%97%E4%B8%8E%E6%89%A7%E8%A1%8C.html"><small>← 上一单元</small>任务队列与执行</a><a href="%E7%AC%AC%E5%8D%81%E5%8D%95%E5%85%83-%E7%BB%BC%E5%90%88%E5%AE%9E%E6%88%98%E4%B8%8E%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91.html"><small>下一单元 →</small>综合实战与独立开发</a></nav><footer class="page-footer"><span>运维编程手册</span><span>读概念 → 预测输出 → 动手运行 → 独立练习</span></footer></main><aside class="toc" aria-label="本页目录"><p>本页目录</p><a class="h2" href="#起点与目标">起点与目标</a><a class="h2" href="#1-身份验证与授权分开理解">1. 身份验证与授权分开理解</a><a class="h2" href="#2-密码不能直接存进数据库">2. 密码不能直接存进数据库</a><a class="h2" href="#3-cookie-与会话每次请求不必重新发送密码">3. Cookie 与会话：每次请求不必重新发送密码</a><a class="h2" href="#4-csrfcookie-会自动发送所以写请求还需证明来源">4. CSRF：Cookie 会自动发送，所以写请求还需证明来源</a><a class="h2" href="#5-沿登录调用链读源码">5. 沿登录调用链读源码</a><a class="h2" href="#6-尝试频率错误响应与日志">6. 尝试频率、错误响应与日志</a><a class="h2" href="#7-创建账户并运行">7. 创建账户并运行</a><a class="h2" href="#8-验证不是只看能否登录">8. 验证不是只看能否登录</a><a class="h2" href="#9-独立练习与参考答案">9. 独立练习与参考答案</a><a class="h2" href="#10-继续学习部署与恢复">10. 继续学习部署与恢复</a><a class="h2" href="#已核实事实与来源">已核实事实与来源</a></aside></div>
+<dialog class="search-dialog"><form method="dialog" class="search-head"><label class="visually-hidden" for="search-input">搜索课程</label><input id="search-input" type="search" placeholder="搜索课程、概念或代码…" autocomplete="off"><button aria-label="关闭搜索">Esc</button></form><div class="search-results" aria-live="polite"><p>输入关键词，查找课程与配套源码。</p></div></dialog></body></html>

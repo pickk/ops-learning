@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="从 Python 基础到运维平台开发：连续课程、动手练习与可下载的项目源码。"><meta name="theme-color" content="#163a35"><title>server.py · 运维编程手册</title><link rel="icon" href="../../../../assets/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="../../../../assets/style.css"><link rel="stylesheet" href="../../../../assets/highlight.css"><script defer src="../../../../assets/app.js" data-root="../../../../"></script></head>
+<body><a class="skip" href="#main">跳到正文</a><aside class="sidebar" id="sidebar"><a class="brand" href="../../../../index.html"><span class="brand-icon">&gt;_</span><span>运维编程手册<small>从第一行代码开始</small></span></a><a class="sidebar-home " href="../../../../index.html">⌂ 学习首页</a><p class="nav-label">系统课程 <span>10 单元</span></p><nav aria-label="系统课程"><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%B8%80%E5%8D%95%E5%85%83-Python%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80.html" ><span>01</span>Python 编程基础</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%BA%8C%E5%8D%95%E5%85%83-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E6%96%87%E4%BB%B6%E5%A4%84%E7%90%86.html" ><span>02</span>数据结构与文件处理</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%B8%89%E5%8D%95%E5%85%83-Linux%E4%B8%8E%E8%BF%90%E7%BB%B4%E8%84%9A%E6%9C%AC%E5%B7%A5%E7%A8%8B.html" ><span>03</span>Linux 与运维脚本</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E5%9B%9B%E5%8D%95%E5%85%83-%E7%B1%BB%E7%BB%A7%E6%89%BF%E4%B8%8E%E6%A8%A1%E5%9D%97%E7%BB%84%E7%BB%87.html" ><span>04</span>类、继承与模块</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%BA%94%E5%8D%95%E5%85%83-%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E4%B8%8EHTTP%E6%8E%A5%E5%8F%A3.html" ><span>05</span>网络编程与 HTTP</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E5%85%AD%E5%8D%95%E5%85%83-%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%8E%E8%B5%84%E4%BA%A7%E7%AE%A1%E7%90%86%E5%90%8E%E7%AB%AF.html" ><span>06</span>数据库与资产 API</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%B8%83%E5%8D%95%E5%85%83-%E5%89%8D%E7%AB%AF%E4%B8%8ENode%E4%BA%A4%E4%BA%92.html" ><span>07</span>前端与 Node 交互</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E5%85%AB%E5%8D%95%E5%85%83-%E8%BF%90%E7%BB%B4%E4%BB%BB%E5%8A%A1%E9%98%9F%E5%88%97%E4%B8%8E%E6%89%A7%E8%A1%8C.html" ><span>08</span>任务队列与执行</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%B9%9D%E5%8D%95%E5%85%83-%E7%99%BB%E5%BD%95%E6%9D%83%E9%99%90%E4%B8%8E%E9%83%A8%E7%BD%B2.html" ><span>09</span>登录权限与部署</a><a class="nav-lesson " href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E5%8D%81%E5%8D%95%E5%85%83-%E7%BB%BC%E5%90%88%E5%AE%9E%E6%88%98%E4%B8%8E%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91.html" ><span>10</span>综合实战与独立开发</a></nav><p class="nav-label">动手与查阅</p><nav class="extras" aria-label="参考资料"><a href="../../../../projects.html">实战项目与源码 <span>05</span></a><a href="../../../../%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E7%AC%AC%E4%B9%9D%E5%8D%95%E5%85%83%E8%A1%A5%E5%85%85-%E9%83%A8%E7%BD%B2%E5%A4%87%E4%BB%BD%E4%B8%8E%E6%81%A2%E5%A4%8D.html">部署、备份与恢复</a><a href="../../../../%E4%B8%8B%E8%BD%BD%E8%B5%84%E6%96%99/index.html">作者资料与练习</a><a href="../../../../notes.html">补充笔记</a></nav><div class="sidebar-footer"><span class="status-dot"></span>循序渐进 · 动手验证</div></aside>
+<div class="page"><header class="topbar"><button class="menu-toggle" aria-label="展开目录" aria-controls="sidebar" aria-expanded="false">☰</button><div class="breadcrumb">学习手册 <span>/</span> 实战项目</div><button class="search-trigger" aria-label="搜索课程"><span>⌕</span> 搜索课程、概念或代码 <kbd>/</kbd></button></header><main id="main" class="reader"><article class="prose"><p class="eyebrow">PROJECT SOURCE</p><h1>server.py</h1><p class="source-path">系统学习/项目/04-网站巡检/server.py</p><p>配套学习源码，可下载后在本机运行。</p><p><a class="button primary" href="../../../../downloads/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/%E9%A1%B9%E7%9B%AE/04-%E7%BD%91%E7%AB%99%E5%B7%A1%E6%A3%80/server.py.txt" download="server.py">下载原文件 ↓</a> <a class="button secondary" href="../../../../downloads/learning-code.zip">下载完整学习资料 ZIP</a></p><pre><code class="hljs language-python"><span class="hljs-keyword">import</span> argparse
+<span class="hljs-keyword">import</span> json
+<span class="hljs-keyword">import</span> threading
+<span class="hljs-keyword">from</span> http.server <span class="hljs-keyword">import</span> BaseHTTPRequestHandler, ThreadingHTTPServer
+<span class="hljs-keyword">from</span> urllib.parse <span class="hljs-keyword">import</span> urlsplit
+<span class="hljs-keyword">from</span> checker <span class="hljs-keyword">import</span> run_checks
+
+
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">Handler</span>(<span class="hljs-title class_ inherited__">BaseHTTPRequestHandler</span>):
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params">self</span>):
+        BaseHTTPRequestHandler.setup(<span class="hljs-variable language_">self</span>)
+        <span class="hljs-variable language_">self</span>.connection.settimeout(<span class="hljs-number">5</span>)
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">log_message</span>(<span class="hljs-params">self, message, *args</span>):
+        <span class="hljs-keyword">pass</span>
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">reply</span>(<span class="hljs-params">self, status, value</span>):
+        body = json.dumps(value, ensure_ascii=<span class="hljs-literal">False</span>).encode(<span class="hljs-string">&quot;utf-8&quot;</span>)
+        <span class="hljs-variable language_">self</span>.send_response(status)
+        <span class="hljs-variable language_">self</span>.send_header(<span class="hljs-string">&quot;Content-Type&quot;</span>, <span class="hljs-string">&quot;application/json; charset=utf-8&quot;</span>)
+        <span class="hljs-variable language_">self</span>.send_header(<span class="hljs-string">&quot;Content-Length&quot;</span>, <span class="hljs-built_in">str</span>(<span class="hljs-built_in">len</span>(body)))
+        <span class="hljs-variable language_">self</span>.send_header(<span class="hljs-string">&quot;Cache-Control&quot;</span>, <span class="hljs-string">&quot;no-store&quot;</span>)
+        <span class="hljs-variable language_">self</span>.end_headers()
+        <span class="hljs-variable language_">self</span>.wfile.write(body)
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">do_GET</span>(<span class="hljs-params">self</span>):
+        path = urlsplit(<span class="hljs-variable language_">self</span>.path).path
+        <span class="hljs-keyword">if</span> path == <span class="hljs-string">&quot;/api/health&quot;</span>:
+            <span class="hljs-variable language_">self</span>.reply(<span class="hljs-number">200</span>, {<span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;ok&quot;</span>})
+        <span class="hljs-keyword">elif</span> path == <span class="hljs-string">&quot;/api/results&quot;</span>:
+            <span class="hljs-variable language_">self</span>.server.result_lock.acquire()
+            <span class="hljs-keyword">try</span>:
+                results = <span class="hljs-built_in">list</span>(<span class="hljs-variable language_">self</span>.server.results)
+            <span class="hljs-keyword">finally</span>:
+                <span class="hljs-variable language_">self</span>.server.result_lock.release()
+            <span class="hljs-variable language_">self</span>.reply(<span class="hljs-number">200</span>, {<span class="hljs-string">&quot;results&quot;</span>: results})
+        <span class="hljs-keyword">else</span>:
+            <span class="hljs-variable language_">self</span>.reply(<span class="hljs-number">404</span>, {<span class="hljs-string">&quot;error&quot;</span>: <span class="hljs-string">&quot;接口不存在&quot;</span>})
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">do_POST</span>(<span class="hljs-params">self</span>):
+        <span class="hljs-keyword">if</span> urlsplit(<span class="hljs-variable language_">self</span>.path).path != <span class="hljs-string">&quot;/api/checks&quot;</span>:
+            <span class="hljs-variable language_">self</span>.reply(<span class="hljs-number">404</span>, {<span class="hljs-string">&quot;error&quot;</span>: <span class="hljs-string">&quot;接口不存在&quot;</span>})
+            <span class="hljs-keyword">return</span>
+        <span class="hljs-keyword">if</span> <span class="hljs-variable language_">self</span>.headers.get(<span class="hljs-string">&quot;Content-Type&quot;</span>, <span class="hljs-string">&quot;&quot;</span>).split(<span class="hljs-string">&quot;;&quot;</span>)[<span class="hljs-number">0</span>].strip() != <span class="hljs-string">&quot;application/json&quot;</span>:
+            <span class="hljs-variable language_">self</span>.reply(<span class="hljs-number">415</span>, {<span class="hljs-string">&quot;error&quot;</span>: <span class="hljs-string">&quot;需要 application/json&quot;</span>})
+            <span class="hljs-keyword">return</span>
+        <span class="hljs-keyword">if</span> <span class="hljs-variable language_">self</span>.headers.get(<span class="hljs-string">&quot;Transfer-Encoding&quot;</span>):
+            <span class="hljs-variable language_">self</span>.reply(<span class="hljs-number">400</span>, {<span class="hljs-string">&quot;error&quot;</span>: <span class="hljs-string">&quot;教学接口不接收分块请求体&quot;</span>})
+            <span class="hljs-keyword">return</span>
+        lengths = <span class="hljs-variable language_">self</span>.headers.get_all(<span class="hljs-string">&quot;Content-Length&quot;</span>, [])
+        <span class="hljs-keyword">try</span>:
+            <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(lengths) != <span class="hljs-number">1</span>:
+                <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">&quot;需要单个 Content-Length&quot;</span>)
+            length = <span class="hljs-built_in">int</span>(lengths[<span class="hljs-number">0</span>])
+            <span class="hljs-keyword">if</span> length &lt;= <span class="hljs-number">0</span> <span class="hljs-keyword">or</span> length &gt; <span class="hljs-number">4096</span>:
+                <span class="hljs-variable language_">self</span>.reply(<span class="hljs-number">413</span>, {<span class="hljs-string">&quot;error&quot;</span>: <span class="hljs-string">&quot;请求体必须为 1 到 4096 字节&quot;</span>})
+                <span class="hljs-keyword">return</span>
+            raw = <span class="hljs-variable language_">self</span>.rfile.read(length)
+            <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(raw) != length:
+                <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">&quot;请求体不完整&quot;</span>)
+            value = json.loads(raw.decode(<span class="hljs-string">&quot;utf-8&quot;</span>))
+            <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">isinstance</span>(value, <span class="hljs-built_in">dict</span>) <span class="hljs-keyword">or</span> <span class="hljs-built_in">set</span>(value) != {<span class="hljs-string">&quot;ids&quot;</span>}:
+                <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">&quot;仅接受 ids 字段&quot;</span>)
+            ids = value[<span class="hljs-string">&quot;ids&quot;</span>]
+            <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">isinstance</span>(ids, <span class="hljs-built_in">list</span>) <span class="hljs-keyword">or</span> <span class="hljs-built_in">len</span>(ids) &lt; <span class="hljs-number">1</span> <span class="hljs-keyword">or</span> <span class="hljs-built_in">len</span>(ids) &gt; <span class="hljs-number">5</span>:
+                <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">&quot;ids 必须包含 1 到 5 个目标&quot;</span>)
+            seen = <span class="hljs-built_in">set</span>()
+            <span class="hljs-keyword">for</span> target_id <span class="hljs-keyword">in</span> ids:
+                <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">isinstance</span>(target_id, <span class="hljs-built_in">str</span>) <span class="hljs-keyword">or</span> target_id <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> <span class="hljs-variable language_">self</span>.server.targets:
+                    <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">&quot;目标未在配置中定义&quot;</span>)
+                <span class="hljs-keyword">if</span> target_id <span class="hljs-keyword">in</span> seen:
+                    <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">&quot;目标不能重复&quot;</span>)
+                seen.add(target_id)
+        <span class="hljs-keyword">except</span> (ValueError, UnicodeError, OSError) <span class="hljs-keyword">as</span> error:
+            <span class="hljs-variable language_">self</span>.reply(<span class="hljs-number">400</span>, {<span class="hljs-string">&quot;error&quot;</span>: <span class="hljs-built_in">str</span>(error)})
+            <span class="hljs-keyword">return</span>
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-variable language_">self</span>.server.check_lock.acquire(blocking=<span class="hljs-literal">False</span>):
+            <span class="hljs-variable language_">self</span>.reply(<span class="hljs-number">409</span>, {<span class="hljs-string">&quot;error&quot;</span>: <span class="hljs-string">&quot;已有巡检运行，请稍后再试&quot;</span>})
+            <span class="hljs-keyword">return</span>
+        <span class="hljs-keyword">try</span>:
+            results = run_checks(<span class="hljs-variable language_">self</span>.server.targets, ids, <span class="hljs-variable language_">self</span>.server.check_timeout)
+            <span class="hljs-variable language_">self</span>.server.result_lock.acquire()
+            <span class="hljs-keyword">try</span>:
+                <span class="hljs-variable language_">self</span>.server.results = results
+            <span class="hljs-keyword">finally</span>:
+                <span class="hljs-variable language_">self</span>.server.result_lock.release()
+            <span class="hljs-variable language_">self</span>.reply(<span class="hljs-number">200</span>, {<span class="hljs-string">&quot;results&quot;</span>: results})
+        <span class="hljs-keyword">finally</span>:
+            <span class="hljs-variable language_">self</span>.server.check_lock.release()
+
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">create_server</span>(<span class="hljs-params">address, targets, timeout=<span class="hljs-number">3</span></span>):
+    server = ThreadingHTTPServer(address, Handler)
+    server.targets = <span class="hljs-built_in">dict</span>(targets)
+    server.results = []
+    server.result_lock = threading.Lock()
+    server.check_lock = threading.Lock()
+    server.check_timeout = timeout
+    <span class="hljs-keyword">return</span> server
+
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">main</span>():
+    parser = argparse.ArgumentParser(description=<span class="hljs-string">&quot;本地巡检教学 API&quot;</span>)
+    parser.add_argument(<span class="hljs-string">&quot;--port&quot;</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">int</span>, default=<span class="hljs-number">8094</span>)
+    args = parser.parse_args()
+    targets = {<span class="hljs-string">&quot;self&quot;</span>: <span class="hljs-string">&quot;http://127.0.0.1:&quot;</span> + <span class="hljs-built_in">str</span>(args.port) + <span class="hljs-string">&quot;/api/health&quot;</span>}
+    server = create_server((<span class="hljs-string">&quot;127.0.0.1&quot;</span>, args.port), targets)
+    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;API: http://127.0.0.1:&quot;</span> + <span class="hljs-built_in">str</span>(args.port), flush=<span class="hljs-literal">True</span>)
+    <span class="hljs-keyword">try</span>:
+        server.serve_forever()
+    <span class="hljs-keyword">except</span> KeyboardInterrupt:
+        <span class="hljs-keyword">pass</span>
+    <span class="hljs-keyword">finally</span>:
+        server.server_close()
+
+
+<span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&quot;__main__&quot;</span>:
+    main()
+</code></pre></article><footer class="page-footer"><span>运维编程手册</span><span>读概念 → 预测输出 → 动手运行 → 独立练习</span></footer></main></div>
+<dialog class="search-dialog"><form method="dialog" class="search-head"><label class="visually-hidden" for="search-input">搜索课程</label><input id="search-input" type="search" placeholder="搜索课程、概念或代码…" autocomplete="off"><button aria-label="关闭搜索">Esc</button></form><div class="search-results" aria-live="polite"><p>输入关键词，查找课程与配套源码。</p></div></dialog></body></html>

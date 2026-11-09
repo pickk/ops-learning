@@ -1,0 +1,211 @@
+[
+  {
+    "repository": "trekhleb/learn-python",
+    "commit": "5e4fad5903ce5a76cc1f90838d69a220968e1494",
+    "source": "LICENSE",
+    "local": "01-Python/LICENSE",
+    "bytes": 1073,
+    "downloaded_sha256": "9364E1660A4907599858374D22B6D6E770356613700FF0C7DDBCB6AFB2316ADF",
+    "local_sha256": "9364e1660a4907599858374d22b6d6e770356613700ff0c7ddbcb6afb2316adf",
+    "modified": false,
+    "local_bytes": 1073
+  },
+  {
+    "repository": "trekhleb/learn-python",
+    "commit": "5e4fad5903ce5a76cc1f90838d69a220968e1494",
+    "source": "src/data_types/test_lists.py",
+    "local": "01-Python/src/data_types/test_lists.py",
+    "bytes": 12299,
+    "downloaded_sha256": "A130CF54B111E93DDFA3F245B0FF590F46CC5354539E92A510246A12A3B132F7",
+    "local_sha256": "d52550344957fa3db00a962db00e4c905c7203073c95e504005c7270bd7cbfb1",
+    "modified": true,
+    "local_bytes": 1688
+  },
+  {
+    "repository": "trekhleb/learn-python",
+    "commit": "5e4fad5903ce5a76cc1f90838d69a220968e1494",
+    "source": "src/data_types/test_dictionaries.py",
+    "local": "01-Python/src/data_types/test_dictionaries.py",
+    "bytes": 3602,
+    "downloaded_sha256": "67560D1E5D13A6BBF3F6C5A5C2E06DE3ACE5177EE563EE43B671B7D23F86FA47",
+    "local_sha256": "c702f2980dc090742eb701e2ddfd75347fc021203ad11148a8d74df1b7523f27",
+    "modified": true,
+    "local_bytes": 1505
+  },
+  {
+    "repository": "trekhleb/learn-python",
+    "commit": "5e4fad5903ce5a76cc1f90838d69a220968e1494",
+    "source": "src/data_types/test_sets.py",
+    "local": "01-Python/src/data_types/test_sets.py",
+    "bytes": 2326,
+    "downloaded_sha256": "1AE0028C8C984956B6CA1ACB98236E4B94AD6DF24D93D31F065F86503A976971",
+    "local_sha256": "e7bd4c0e248f86dc64ea74c0172ac5c459f752ddbfce75ec05aca39cd0ab7948",
+    "modified": true,
+    "local_bytes": 846
+  },
+  {
+    "repository": "trekhleb/learn-python",
+    "commit": "5e4fad5903ce5a76cc1f90838d69a220968e1494",
+    "source": "src/data_types/test_tuples.py",
+    "local": "01-Python/src/data_types/test_tuples.py",
+    "bytes": 3648,
+    "downloaded_sha256": "5D3282CEF53329F9CAC1003FC85F59A34D14E0BBC163C3AEB6E6DA1BE57C74E2",
+    "local_sha256": "325823ac8d9892e24ed9ad84da502910219bdffb65013fcd82dbe0edc54ccca3",
+    "modified": true,
+    "local_bytes": 446
+  },
+  {
+    "repository": "realpython/materials",
+    "commit": "b7375ca673c23e4fae70a46f9df52fc48191c958",
+    "source": "LICENSE",
+    "local": "02-网络/LICENSE",
+    "bytes": 1068,
+    "downloaded_sha256": "9555C6ED36494E313C437652AF1BA4E637F3BA4B836D07BAC1171ED88AB787DE",
+    "local_sha256": "9555c6ed36494e313c437652af1ba4e637f3ba4b836d07bac1171ed88ab787de",
+    "modified": false,
+    "local_bytes": 1068
+  },
+  {
+    "repository": "realpython/materials",
+    "commit": "b7375ca673c23e4fae70a46f9df52fc48191c958",
+    "source": "python-sockets-tutorial/echo-client.py",
+    "local": "02-网络/python-sockets-tutorial/echo-client.py",
+    "bytes": 315,
+    "downloaded_sha256": "9F645F130A4CDA74038FC67FBE60DE203F3F614C8024DBE6270B181F7459B1D4",
+    "local_sha256": "08ca031da112b1b8453850e853d074bfda0b522ba807dcfcc304fbb38db34645",
+    "modified": true,
+    "local_bytes": 451
+  },
+  {
+    "repository": "realpython/materials",
+    "commit": "b7375ca673c23e4fae70a46f9df52fc48191c958",
+    "source": "python-sockets-tutorial/echo-server.py",
+    "local": "02-网络/python-sockets-tutorial/echo-server.py",
+    "bytes": 493,
+    "downloaded_sha256": "B2EBEE06678E2BE71000E29BD939E9F2F23A8EF1B04D115C63F5871C051BD863",
+    "local_sha256": "a00a509d858640f69e08c846f7b175f442eed5d70d536995da11ddd8b16843d7",
+    "modified": true,
+    "local_bytes": 581
+  },
+  {
+    "repository": "workshopper/learnyounode",
+    "commit": "6b8b8f16fcfbfc201f1ee3df2dc554d4ec3fc393",
+    "source": "LICENSE.md",
+    "local": "03-Node/LICENSE.md",
+    "bytes": 1261,
+    "downloaded_sha256": "D9C18960C2155AACBA1DCA7060F001E8011B581D44782F15EBB0701B2F25B8FC",
+    "local_sha256": "d9c18960c2155aacba1dca7060f001e8011b581d44782f15ebb0701b2f25b8fc",
+    "modified": false,
+    "local_bytes": 1261
+  },
+  {
+    "repository": "workshopper/learnyounode",
+    "commit": "6b8b8f16fcfbfc201f1ee3df2dc554d4ec3fc393",
+    "source": "exercises/http_client/problem.zh-cn.md",
+    "local": "03-Node/exercises/http_client/problem.zh-cn.md",
+    "bytes": 1657,
+    "downloaded_sha256": "2BB33736C945684C24E92D755238A8E801246DE712B6493D45921940A8A081D4",
+    "local_sha256": "2bb33736c945684c24e92d755238a8e801246de712b6493d45921940a8a081d4",
+    "modified": false,
+    "local_bytes": 1657
+  },
+  {
+    "repository": "workshopper/learnyounode",
+    "commit": "6b8b8f16fcfbfc201f1ee3df2dc554d4ec3fc393",
+    "source": "exercises/http_client/solution/solution.js",
+    "local": "03-Node/exercises/http_client/solution/solution.js",
+    "bytes": 225,
+    "downloaded_sha256": "4CA65CEFF335B814058FB4104E30E6E81121073C50FD6847ABD7E1DF08B4E66E",
+    "local_sha256": "4ca65ceff335b814058fb4104e30e6e81121073c50fd6847abd7e1df08b4e66e",
+    "modified": false,
+    "local_bytes": 225
+  },
+  {
+    "repository": "workshopper/learnyounode",
+    "commit": "6b8b8f16fcfbfc201f1ee3df2dc554d4ec3fc393",
+    "source": "exercises/http_json_api_server/problem.zh-cn.md",
+    "local": "03-Node/exercises/http_json_api_server/problem.zh-cn.md",
+    "bytes": 2059,
+    "downloaded_sha256": "82C76992759167C0FB2AD861B0DCD0A4AB43509268A873195906D9AE36447496",
+    "local_sha256": "82c76992759167c0fb2ad861b0dcd0a4ab43509268a873195906d9ae36447496",
+    "modified": false,
+    "local_bytes": 2059
+  },
+  {
+    "repository": "workshopper/learnyounode",
+    "commit": "6b8b8f16fcfbfc201f1ee3df2dc554d4ec3fc393",
+    "source": "exercises/http_json_api_server/solution/solution.js",
+    "local": "03-Node/exercises/http_json_api_server/solution/solution.js",
+    "bytes": 795,
+    "downloaded_sha256": "C2E5D420CB6818239A88856B6C28B3E2E2030CFD84D30A84C7BF9BFFEBE5D50E",
+    "local_sha256": "c2e5d420cb6818239a88856b6c28b3e2e2030cfd84d30a84c7bf9bffebe5d50e",
+    "modified": false,
+    "local_bytes": 795
+  },
+  {
+    "repository": "mdn/learning-area",
+    "commit": "21973263ba859ff3477919087b488157f9d618a6",
+    "source": "LICENSE",
+    "local": "04-浏览器/LICENSE",
+    "bytes": 6555,
+    "downloaded_sha256": "36ffd9dc085d529a7e60e1276d73ae5a030b020313e6c5408593a6ae2af39673",
+    "local_sha256": "36ffd9dc085d529a7e60e1276d73ae5a030b020313e6c5408593a6ae2af39673",
+    "modified": false,
+    "local_bytes": 6555
+  },
+  {
+    "repository": "mdn/learning-area",
+    "commit": "21973263ba859ff3477919087b488157f9d618a6",
+    "source": "javascript/apis/fetching-data/fetch-finish.html",
+    "local": "04-浏览器/fetch-finish.html",
+    "bytes": 2761,
+    "downloaded_sha256": "9f290d092f2611e68176ba3b73634066b9cbba4c5883a4c1fffb47ece7c32ead",
+    "local_sha256": "b1e103e89bd4b725f51eec0ea26637cfa18d02d18470fc1390431a9c04bff8be",
+    "modified": true,
+    "local_bytes": 2419
+  },
+  {
+    "repository": "mdn/learning-area",
+    "commit": "21973263ba859ff3477919087b488157f9d618a6",
+    "source": "javascript/apis/fetching-data/verse1.txt",
+    "local": "04-浏览器/verse1.txt",
+    "bytes": 506,
+    "downloaded_sha256": "eb0f99b044d5a20f65f06fd8709049b7477b850d27dd5b980a7b669a348e5cc9",
+    "local_sha256": "eb0f99b044d5a20f65f06fd8709049b7477b850d27dd5b980a7b669a348e5cc9",
+    "modified": false,
+    "local_bytes": 506
+  },
+  {
+    "repository": "mdn/learning-area",
+    "commit": "21973263ba859ff3477919087b488157f9d618a6",
+    "source": "javascript/apis/fetching-data/verse2.txt",
+    "local": "04-浏览器/verse2.txt",
+    "bytes": 269,
+    "downloaded_sha256": "5c583780765a834c1075ae7db7f700d11de29437c358ecebc87230969ef4bdeb",
+    "local_sha256": "5c583780765a834c1075ae7db7f700d11de29437c358ecebc87230969ef4bdeb",
+    "modified": false,
+    "local_bytes": 269
+  },
+  {
+    "repository": "mdn/learning-area",
+    "commit": "21973263ba859ff3477919087b488157f9d618a6",
+    "source": "javascript/apis/fetching-data/verse3.txt",
+    "local": "04-浏览器/verse3.txt",
+    "bytes": 253,
+    "downloaded_sha256": "8c92a51fe67249b9d821725b22ab4d9b4df95258386d076a10d97fb0a0ebec5b",
+    "local_sha256": "8c92a51fe67249b9d821725b22ab4d9b4df95258386d076a10d97fb0a0ebec5b",
+    "modified": false,
+    "local_bytes": 253
+  },
+  {
+    "repository": "mdn/learning-area",
+    "commit": "21973263ba859ff3477919087b488157f9d618a6",
+    "source": "javascript/apis/fetching-data/verse4.txt",
+    "local": "04-浏览器/verse4.txt",
+    "bytes": 280,
+    "downloaded_sha256": "0db06ed817f2d6c2e5148cdd1f2fee02374f59e88ee95c6f1dc94fb3cb7b347e",
+    "local_sha256": "0db06ed817f2d6c2e5148cdd1f2fee02374f59e88ee95c6f1dc94fb3cb7b347e",
+    "modified": false,
+    "local_bytes": 280
+  }
+]

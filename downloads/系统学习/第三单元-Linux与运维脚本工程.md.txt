@@ -1,0 +1,182 @@
+# 第三单元：让脚本在 Linux 上可靠运行
+
+日期：2026-11-08
+
+## 目标与前置知识
+
+先完成前两单元，能用函数读取 JSON、处理字典、捕获异常。本单元把这些能力变成有参数、日志、退出码和文件保护的本机巡检 CLI。CLI 是命令行界面，未来平台可以调用它，不需要重新写检查逻辑。
+
+练习使用 Linux 或 WSL 的 Bash；PowerShell 的环境变量与重定向语法并不完全相同。Python 项目本身只依赖标准库。以下命令均为手动练习，不代表课程已经更改了你的机器配置。
+
+## 第 1 课：脚本在什么地方、以谁的身份运行
+
+```bash
+pwd
+ls -l
+whoami
+id
+python3 --version
+```
+
+pwd 显示当前目录，ls 列文件，whoami 显示用户，id 显示用户与组。权限由进程身份决定，不由你“认为自己能访问”决定。相对路径从当前工作目录解析；定时任务往往不是从你的项目目录启动。
+
+绝对路径从 `/` 开始。Windows 文件在 WSL 下通常位于 `/mnt/c/`。路径含空格时用引号，例如 `cd "/path/with spaces"`。先定位目录再运行，不要通过反复修改源码中的路径来解决问题。
+
+权限如 `-rw-r-----`：首字符描述文件类型，之后三组分别为所有者、组、其他人的读 r、写 w、执行 x。目录的 x 表示可以穿越访问其中的路径。
+
+```bash
+mkdir -p learning-lab
+cd learning-lab
+printf 'print("hello")\n' > hello.py
+chmod 600 hello.py
+python3 hello.py
+```
+
+本例创建你自己的练习文件，600 表示仅所有者可读写。通过 python3 读取脚本不要求脚本本身具有执行位。`./hello.py` 则需要可执行权限和正确的 shebang。不要用 chmod 777 作为所有权限错误的解决办法。
+
+练习：解释为什么 python3 能运行 600 的文件。答案：解释器执行，脚本作为数据被读取，当前用户有读权限即可。
+
+## 第 2 课：进程、标准输出和退出码
+
+程序运行起来就是进程。它有 PID、工作目录、环境变量和身份，结束时有退出码。
+
+```bash
+python3 -c 'import os; print(os.getpid())'
+ps -ef
+python3 -c 'import sys; sys.exit(2)'
+printf '%s\n' "$?"
+```
+
+最后输出 2。`$?` 是上一个命令的退出码，必须马上查看，否则可能看到别的命令的结果。0 通常表示成功；非零的具体含义由程序约定。
+
+stdout 用来输出结果，stderr 用来输出诊断信息。调用者可以分别收集它们：
+
+```bash
+python3 inspect_host.py --config config.json > result.txt 2> run.log
+```
+
+`>` 覆盖，`>>` 追加；不要把输入文件当作重定向目标。配套工具 stdout 是 JSON，stderr 是日志，因此未来平台可以直接解析结果而不被日志干扰。
+
+Ctrl+C 请求终止前台程序。只对自己确认的进程使用 kill；不要根据模糊名称批量停止其他服务。
+
+练习：启动示例后分别查看 result.txt 和 run.log。预期一份是机器可读结果，另一份是诊断。退出码 1 在本工具中表示检查成功但发现告警，不等于脚本崩溃。
+
+## 第 3 课：参数、配置和环境变量
+
+参数适合一次运行的选项，配置文件保存稳定设置，环境变量从启动环境传入。不要把密码写在源码或可被进程列表看到的命令行里。
+
+```python
+import argparse
+
+parser = argparse.ArgumentParser(description="阈值示例")
+parser.add_argument("--threshold", type=int, default=80)
+args = parser.parse_args()
+print(args.threshold)
+```
+
+保存为 threshold.py。`python3 threshold.py` 输出 80；加 `--threshold 90` 输出 90；传 abc 会被 argparse 拒绝。类型检查之后仍需要范围检查，数字 900 不代表有效百分比。
+
+```bash
+export OPS_CONFIG="/absolute/path/config.json"
+python3 inspect_host.py --dry-run
+```
+
+配套项目的配置路径优先级为命令行 --config → OPS_CONFIG 环境变量 → 当前目录 config.json。配置中的 disk_path 和 log_path 相对于配置文件目录，输出路径相对于启动目录。把规则写清楚，才能排查“手动运行正常，定时失败”。
+
+练习：用环境变量指定不存在的配置，再用命令行 --config 指定正确配置。预期显式命令行覆盖环境变量。
+
+## 第 4 课：日志和大文件
+
+```python
+import logging
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+logging.info("开始检查")
+logging.warning("发现异常")
+logging.error("无法完成检查")
+```
+
+DEBUG 用于调试，INFO 记录正常过程，WARNING 表示需要关注，ERROR 表示操作失败。不要记录密码或整份敏感配置。
+
+读取日志时用 `for line in file` 逐行处理，避免一次 read 全部文件。本项目约定每行第二个空白分隔字段为级别，只有字段精确等于 ERROR 才统计；消息里出现单词 ERROR 不会误算。实际应用应依据真正日志格式解析，不能套用未经验证的规则。
+
+逐行读取减少整文件内存占用，但单行仍可能很长；生产采集还需要大小、时间和轮转策略。该工具每次扫描整个给定文件，适合学习及小日志，不是增量日志采集器。
+
+练习：增加 `2026-11-08T10:03:00 INFO message_mentions_ERROR`，错误计数应保持 1；再加一条 ERROR，计数应为 2。
+
+## 第 5 课：调用外部命令与超时
+
+```python
+import subprocess
+import sys
+
+result = subprocess.run(
+    [sys.executable, "-c", "print('child finished')"],
+    capture_output=True, text=True, timeout=5
+)
+print(result.returncode)
+print(result.stdout.strip())
+```
+
+sys.executable 指向当前 Python 解释器。列表第一项是程序，之后每项是一个参数；这里没有通过 Shell 拼接字符串。capture_output 收集输出，text 让输出成为字符串，timeout 单位为秒。默认非零退出不自动抛异常，所以要检查 returncode；设置 check=True 时会抛 CalledProcessError。
+
+```python
+import subprocess
+import sys
+
+try:
+    subprocess.run([sys.executable, "-c", "import time; time.sleep(2)"], timeout=0.1)
+except subprocess.TimeoutExpired:
+    print("子进程超时")
+```
+
+该例有意触发超时。run 会清理直接子进程，但管理整个进程树需要额外设计，不能假定所有孙进程也会停止。capture_output 把输出保存在内存，外部命令输出很大时应改为写文件或受限读取。
+
+练习：把子进程改为 `import sys; sys.exit(3)`，父进程检查 returncode，输出失败。答案：判断 `result.returncode != 0`，输出错误并由主函数返回非零。不要因为命令启动成功就认定任务完成。
+
+## 第 6 课：重复运行和完整写入
+
+幂等表示重复执行后，目标状态与执行一次一致。生成报告适合替换同名输出，不应每次把同样记录追加进去。告警次数、日志时间等观测记录可以增长，不能把所有输出字节不变当作幂等的定义。
+
+第二单元直接以 w 打开目标文件，写一半失败时可能破坏旧报告。本单元改成：同目录创建临时文件 → 写完整 JSON → flush/fsync → 关闭 → os.replace 替换目标。出现异常时清理本次临时文件。
+
+同目录是为了让临时文件与目标通常位于同一文件系统；os.replace 成功时替换是原子的，读者不会读到半份内容。它不是数据库事务，也不等于所有断电情况下都保证持久；多个写入者仍可能互相覆盖。因此定时任务需防重叠。
+
+项目的 --dry-run 会真实执行只读检查并打印结果，但不写输出。它不会预测未来磁盘状态，也不是只检查命令语法。
+
+练习：先正常写 report.json，再把配置改成错误类型。预期返回 2，已有报告保持不变。
+
+## 第 7 课：定时运行与操作手册
+
+先用完整命令手动运行，再设置定时；课程不会自动为你安装任务。下面是 Linux crontab 示例，必须替换成你自己的绝对路径：
+
+```text
+*/5 * * * * /usr/bin/flock -n /home/ops/inspect.lock /usr/bin/python3 /home/ops/inspect_host.py --config /home/ops/config.json --output /home/ops/report.json >> /home/ops/inspect-run.log 2>&1
+```
+
+五个时间字段分别是分钟、小时、日期、月份、星期。这里每五分钟尝试运行一次。flock 防止上次未结束又启动一个实例，锁文件位于该用户可写目录；先用 command -v 检查这些程序实际位置。cron 的 PATH 与交互终端不同，使用绝对路径。
+
+stdout 与 stderr 合并进运行日志，文件会增长，需要日志轮转。cron 是否运行、机器时区、任务所属用户都影响结果。退出码不会自动变成你的通知，需要监控或通知服务接入；课程后续任务平台单元补充这部分。
+
+只需记住排查顺序：命令是否成功 → 路径是否正确 → 用户权限 → 环境变量 → 定时服务 → 日志。WSL 不一定运行 cron 或 systemd，不能把文件写入就说定时任务已生效。
+
+练习：写出自己机器适用的手动命令和定时命令，明确用户、配置、输出、锁和日志的位置。参考答案就是上述结构，但路径必须实际验证，不能照抄 /home/ops。
+
+## 第 8 课：项目阅读与验收
+
+打开 [本机巡检项目](项目/02-本机巡检/README.md)，按 main → read_config → inspect → write_report 阅读。
+
+- read_config：解析、检查类型和范围、确定路径。
+- inspect：读取真实磁盘容量和日志，返回结果；不写业务文件。
+- write_report：只负责完整替换报告。
+- main：参数、日志、流程、错误和退出码。
+
+综合练习：增加 `error_warning_count` 配置，把“有一条 ERROR 就告警”改成“达到阈值才告警”。步骤答案：在允许字段名单中加键；默认值设 1；拒绝 bool、非 int 和小于 1 的值；在 inspect 中用 error_lines >= threshold；报告里写明阈值。测试 0、1、2 条错误及阈值 2 的边界。不要仅在前端校验。
+
+通过标准：能从不同工作目录运行；明确三种退出码；处理缺文件和错误配置；重复执行不追加重复报告；dry-run 不写文件；理解外部命令超时；能够说明如何防止定时重叠。
+
+## 来源、限制与下一步
+
+工具和课程为本地教学实现。API 核对来源：[Python argparse](https://docs.python.org/3/library/argparse.html)、[subprocess](https://docs.python.org/3/library/subprocess.html)、[os.replace](https://docs.python.org/3/library/os.html#os.replace)。只使用基础 API，不依赖文档中的新版可选特性。
+
+尚未替你安装 cron，也未接入通知或远程服务器。下一单元讲类、组合与模块，把检查逻辑组织成可替换检查器；之后再进入 HTTP 与平台。
